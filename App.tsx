@@ -2,8 +2,11 @@ import * as React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TabNavigator from "./src/navigator/TabNavigator";
+import LoginScreen from "./src/screens/LoginScreen";
+import SignUpScreen from "./src/screens/SignUpScreen";
 import SpectacleDetailsScreen from "./src/screens/SpectacleDetailsScreen";
 import SeatBookingScreen from "./src/screens/SeatBookingScreen";
+import HomeScreen from "./src/screens/HomeScreen";
 import PlaceScreen from "./src/screens/PlaceScreen";
 import * as Font from "expo-font";
 
@@ -12,7 +15,20 @@ const Stack = createNativeStackNavigator();
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ animation: "default" }}
+        />
+         <Stack.Screen
+          name="SignUp"
+          component={SignUpScreen}
+          options={{ animation: "default" }}
+        />
         <Stack.Screen
           name="Tab"
           component={TabNavigator}
@@ -27,6 +43,11 @@ const App = () => {
           name="SeatBooking"
           component={SeatBookingScreen}
           options={{ animation: "slide_from_bottom" }}
+        />
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ animation: "default" }}
         />
         {/*<Stack.Screen name="PlaceScreen" component={PlaceScreen} options={{animation: 'slide_from_bottom'}}/>*/}
       </Stack.Navigator>

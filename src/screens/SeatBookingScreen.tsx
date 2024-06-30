@@ -1,6 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -20,19 +19,28 @@ import {
 } from "../theme/Theme";
 import { LinearGradient } from "expo-linear-gradient";
 import AppHeader from "../components/AppHeader";
-import { MaterialIcons } from "@expo/vector-icons";
-import { Ionicons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 import { movieDetails } from "../api/apicalls";
 
-const getMovieDetails = async (movieid: string) => {
+type Zone = {
+  name: string;
+  price: number;
+};
+
+type MovieDetails = {
+  images?: { url: string }[];
+};
+
+const getMovieDetails = async (
+  movieid: string
+): Promise<MovieDetails | null> => {
   try {
     let response = await fetch(movieDetails(movieid));
     let json = await response.json();
-    //console.log("Movie details response:", json);
     return json;
   } catch (error) {
     console.error("Il y a une erreur dans la fonction getMovieDetails", error);
+    return null;
   }
 };
 
@@ -45,9 +53,15 @@ const timeArray: string[] = [
   "21:00",
 ];
 
+const zones: Zone[] = [
+  { name: "VIP", price: 10000 },
+  { name: "Premium", price: 7000 },
+  { name: "Lite", price: 5000 },
+];
+
 const generateDate = () => {
   const date = new Date();
-  let weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Stat"];
+  let weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   let weekdays = [];
   for (let i = 0; i < 7; i++) {
     let tempDate = {
@@ -59,46 +73,17 @@ const generateDate = () => {
   return weekdays;
 };
 
-const generateSeats = () => {
-  let numRow = 8;
-  let numColomn = 3;
-  let rowArray = [];
-  let start = 1;
-  let reachnine = false;
-
-  for (let i = 0; i < numRow; i++) {
-    let colomnArray = [];
-    for (let j = 0; j < numColomn; j++) {
-      let seatObject = {
-        number: start,
-        taken: Boolean(Math.round(Math.random())),
-        selected: false,
-      };
-      colomnArray.push(seatObject);
-      start++;
-    }
-    if (i == 3) {
-      numColomn += 2;
-    }
-    if (numColomn < 9 && !reachnine) {
-      numColomn += 2;
-    } else {
-      reachnine = true;
-      numColomn -= 2;
-    }
-    rowArray.push(colomnArray);
-  }
-  return rowArray;
-};
-
 const SeatBookingScreen = ({ navigation, route }: any) => {
-  const [movieData, setMovieData] = useState<any>(null);
-  const [dateArray, setDateArray] = useState<any[]>(generateDate());
-  const [selectedDateIndex, setSelectedDateIndex] = useState<any>();
-  const [price, setPrice] = useState<number>(0);
-  const [twoDSeatArray, setTwoDSeatArrray] = useState<any[][]>(generateSeats());
-  const [selectedSeatArray, setSelectedSeatArray] = useState([]);
-  const [selectedTimeIndex, setSelectedTimeIndex] = useState<any>();
+  const [movieData, setMovieData] = useState<MovieDetails | null>(null);
+  const [dateArray, setDateArray] = useState(generateDate());
+  const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(
+    null
+  );
+  const [price, setPrice] = useState(0);
+  const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
+  const [selectedTimeIndex, setSelectedTimeIndex] = useState<number | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchMovieData = async () => {
@@ -113,37 +98,22 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
     fetchMovieData();
   }, []);
 
-  const selecteSeat = (index: number, subindex: number, num: number) => {
-    if (!twoDSeatArray[index][subindex].taken) {
-      let array: any = [...selectedSeatArray];
-      let temp = [...twoDSeatArray];
-      temp[index][subindex].selected = !temp[index][subindex].selected;
-      if (!array.includes(num)) {
-        array.push(num);
-        setSelectedSeatArray(array);
-      } else {
-        const tempindex = array.indexOf(num);
-        if (tempindex > -1) {
-          array.splice(tempindex, 1);
-          setSelectedSeatArray(array);
-        }
-      }
-      setPrice(array.length * 5000.0);
-      setTwoDSeatArrray(temp);
-    }
+  const selectZone = (zone: Zone) => {
+    setSelectedZone(zone);
+    setPrice(zone.price);
   };
 
-  const BookSeats = async () => {
+  const BookTickets = async () => {
     if (
-      selectedSeatArray.length !== 0 &&
-      timeArray[selectedTimeIndex] !== undefined &&
-      dateArray[selectedDateIndex] !== undefined
+      selectedZone &&
+      selectedTimeIndex !== null &&
+      selectedDateIndex !== null
     ) {
       try {
         await SecureStore.setItemAsync(
           "ticket",
           JSON.stringify({
-            seatArray: selectedSeatArray,
+            zone: selectedZone.name,
             time: timeArray[selectedTimeIndex],
             date: dateArray[selectedDateIndex],
             ticketImage: route.params.PosterImage,
@@ -151,10 +121,10 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
           })
         );
       } catch (error) {
-        console.log("Il ya un probleme dans la fonction BookSeats");
+        console.log("Il y a un problème dans la fonction BookTickets");
       }
       navigation.navigate("Ticket", {
-        seatArray: selectedSeatArray,
+        zone: selectedZone.name,
         time: timeArray[selectedTimeIndex],
         date: dateArray[selectedDateIndex],
         ticketImage: route.params.PosterImage,
@@ -162,7 +132,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
       });
     } else {
       ToastAndroid.showWithGravity(
-        "Please Select Seats, Date and Time of the Show",
+        "Please Select Zone, Date and Time of the Show",
         ToastAndroid.SHORT,
         ToastAndroid.BOTTOM
       );
@@ -198,64 +168,30 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
             </View>
           </LinearGradient>
         </ImageBackground>
-        <Text style={styles.screenText}>Screen This Side</Text>
+        <Text style={styles.screenText}>Stage This Side</Text>
       </View>
 
-      <View style={styles.seatContainer}>
-        <View style={styles.containerGap20}>
-          {twoDSeatArray?.map((item, index) => {
-            return (
-              <View key={index} style={styles.seatRow}>
-                {item?.map((subitem, subindex) => {
-                  return (
-                    <TouchableOpacity
-                      key={subitem.number}
-                      onPress={() => {
-                        selecteSeat(index, subindex, subitem.number);
-                      }}
-                    >
-                      <MaterialIcons
-                        name="chair"
-                        style={[
-                          styles.seatIcon,
-                          subitem.taken ? { color: COLORS.Grey } : {},
-                          subitem.selected ? { color: COLORS.Orange } : {},
-                        ]}
-                      />
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            );
-          })}
-        </View>
-
-        <View style={styles.seatRadioContainer}>
-          <View style={styles.radioContainer}>
-            <Ionicons name="radio-button-on-outline" style={styles.radioIcon} />
-            <Text style={styles.radioText}>Available</Text>
-          </View>
-          <View style={styles.radioContainer}>
-            <Ionicons
-              name="radio-button-on-outline"
-              style={[styles.radioIcon, { color: COLORS.Grey }]}
-            />
-            <Text style={styles.radioText}>Taken</Text>
-          </View>
-          <View style={styles.radioContainer}>
-            <Ionicons
-              name="radio-button-on-outline"
-              style={[styles.radioIcon, { color: COLORS.Orange }]}
-            />
-            <Text style={styles.radioText}>Selected</Text>
-          </View>
-        </View>
+      <View style={styles.zoneContainer}>
+        {zones.map((zone, index) => (
+          <TouchableOpacity
+            key={index}
+            onPress={() => selectZone(zone)}
+            style={[
+              styles.zone,
+              selectedZone?.name === zone.name && {
+                backgroundColor: COLORS.Orange,
+              },
+            ]}
+          >
+            <Text style={styles.zoneText}>{zone.name}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View>
         <FlatList
           data={dateArray}
-          keyExtractor={(item) => item.date}
+          keyExtractor={(item) => item.date.toString()}
           horizontal
           bounces={false}
           contentContainerStyle={styles.containerGap24}
@@ -320,7 +256,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
           <Text style={styles.totalPriceText}>Total Price</Text>
           <Text style={styles.price}>Ar {price}.00</Text>
         </View>
-        <TouchableOpacity onPress={BookSeats}>
+        <TouchableOpacity onPress={BookTickets}>
           <Text style={styles.buttonText}>Buy Tickets</Text>
         </TouchableOpacity>
       </View>
@@ -350,6 +286,22 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_10,
     color: COLORS.WhiteRGBA15,
+  },
+  zoneContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: SPACING.space_24,
+  },
+  zone: {
+    paddingVertical: SPACING.space_10,
+    paddingHorizontal: SPACING.space_20,
+    borderRadius: BORDERRADIUS.radius_25,
+    backgroundColor: COLORS.DarkGrey,
+  },
+  zoneText: {
+    fontFamily: FONTFAMILY.poppins_medium,
+    fontSize: FONTSIZE.size_16,
+    color: COLORS.White,
   },
   seatContainer: {
     marginVertical: SPACING.space_20,
