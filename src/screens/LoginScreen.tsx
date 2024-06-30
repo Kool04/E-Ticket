@@ -1,17 +1,37 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import { firebaseConfig } from "../../firebase-config";
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    // Implement your login logic here
-    navigation.navigate("Tab");
-  };
-
   const navigateToSignUp = () => {
     navigation.navigate("SignUp"); // Navigate to sign up screen
+  };
+
+  const handleLogin = () => {
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        console.log("Login successful");
+        const user = userCredential.user;
+        console.log(user);
+        navigation.navigate("Tab");
+      })
+      .catch((error) => {
+        console.error(error);
+        Alert.alert("Login Failed", "Invalid email or password");
+      });
   };
 
   return (
@@ -32,8 +52,8 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} />
       <Button title="Sign Up" onPress={navigateToSignUp} />
+      <Button title="Login" onPress={handleLogin} />
     </View>
   );
 };
