@@ -22,6 +22,17 @@ import InputHeader from "../components/InputHeader";
 import CategoryHeader from "../components/CategoryHeader";
 import SubMovieCard from "../components/SubMovieCard";
 import MovieCard from "../components/MovieCard";
+import { firebaseConfig } from "../../firebase-config";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  DocumentData,
+} from "firebase/firestore";
+
+const app = initializeApp(firebaseConfig);
+const firestore = getFirestore(app);
 
 const { width } = Dimensions.get("window");
 
@@ -70,6 +81,7 @@ const HomeScreen = ({ navigation }: any) => {
   const [nowPlayingMoviesList, setNowPlayingMoviesList] = useState<any[]>([]);
   const [upcomingMoviesList, setUpcomingMoviesList] = useState<any[]>([]);
   const [popularMoviesList, setPopularMoviesList] = useState<any[]>([]);
+  const [spectacle, setSpectacle] = useState<DocumentData[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -116,6 +128,29 @@ const HomeScreen = ({ navigation }: any) => {
         console.error("Erreur lors de la récupération des films:", error);
       }
     })();
+
+    const fetchMovies = async () => {
+      try {
+        const moviesCollection = collection(firestore, "spectacle");
+        const querySnapshot = await getDocs(moviesCollection);
+        const fetchedMovies: DocumentData[] = []; // Définir explicitement le type pour fetchedMovies
+
+        querySnapshot.forEach((doc) => {
+          fetchedMovies.push(doc.data());
+        });
+
+        console.log(fetchedMovies); // Vérifiez les données récupérées depuis Firestore
+
+        setSpectacle(fetchedMovies);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des données Firestore:",
+          error
+        );
+      }
+    };
+
+    fetchMovies();
   }, []);
 
   const searchMoviesFunction = () => {
@@ -155,15 +190,17 @@ const HomeScreen = ({ navigation }: any) => {
         <InputHeader searchFunction={searchMoviesFunction} />
       </View>
       <CategoryHeader title={"Concert"} />
+
       <FlatList
-        data={nowPlayingMoviesList}
-        keyExtractor={(item: any) => item.id}
+        data={spectacle}
+        keyExtractor={(item) => item.id}
         bounces={false}
         showsVerticalScrollIndicator={false}
+        snapToInterval={width * 0.7 + SPACING.space_36}
         contentContainerStyle={styles.containerGap36}
         horizontal
-        renderItem={({ item, index }) => {
-          if (!item.name) {
+        renderItem={({ item }) => {
+          if (!item || !item.nom_spectacle) {
             return (
               <View
                 style={{
@@ -173,24 +210,24 @@ const HomeScreen = ({ navigation }: any) => {
             );
           }
 
-          const imageUrl = item.images[6].url;
-          //const id=item.id;
-          //console.log(id)
-          //console.log("Image URL:", imageUrl);
+          const imageUrl = item.photo_poster;
+
           return (
             <MovieCard
               shouldMarginatedAtEnd={true}
               cardFunction={() => {
-                navigation.push("SpectacleDetails", { movieid: item.id });
+                console.log({ movieid: item.Document_ID });
+                navigation.push("SpectacleDetails", {
+                  movieid: item.ID_spectacle,
+                });
               }}
               cardWidth={width * 0.7}
-              isFirst={index == 0 ? true : false}
-              isLast={index == nowPlayingMoviesList?.length - 1 ? true : false}
-              title={item.name}
+              title={item.nom_spectacle}
               imagePath={imageUrl}
-              genre={item.classifications.slice(1, 4)}
-              vote_average={item.dates.start.localDate}
-              vote_count={item.dates.start.localTime}
+              vote_count={
+                item.date ? item.date.toDate().toLocaleDateString() : ""
+              }
+              genre={item.genre || []} // Ensure genre is defined and is an array
             />
           );
         }}

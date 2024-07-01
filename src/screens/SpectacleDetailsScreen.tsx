@@ -25,29 +25,18 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { FontAwesome } from "@expo/vector-icons";
 import CategoryHeader from "../components/CategoryHeader";
 import ArtistCard from "../components/ArtistCard";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 const getMovieDetails = async (movieid: string) => {
-  try {
-    let response = await fetch(movieDetails(movieid));
-    let json = await response.json();
-    //console.log("Movie details response:", json);
-    return json;
-  } catch (error) {
-    console.error("Il y a une erreur dans la fonction getMovieDetails", error);
-  }
-};
+  const db = getFirestore();
+  const docRef = doc(db, "spectacles", movieid);
+  const docSnap = await getDoc(docRef);
 
-const getMovieCastDetails = async (movieid: string) => {
-  try {
-    let response = await fetch(movieCastDetails(movieid));
-    let json = await response.json();
-    console.log("Movie cast details response:", json);
-    return json;
-  } catch (error) {
-    console.error(
-      "Il y a une erreur dans la fonction getMovieCastDetails",
-      error
-    );
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    console.error("No such document!");
+    return null;
   }
 };
 
@@ -63,11 +52,7 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
     (async () => {
       const tempMovieData = await getMovieDetails(route.params.movieid);
       setMovieData(tempMovieData);
-    })();
-
-    (async () => {
-      const tempMovieCastData = await getMovieCastDetails(route.params.movieid);
-      setMovieCastData(tempMovieCastData.cast);
+      console.log("Spectacle Data:", tempMovieData);
     })();
 
     const randomRating = (Math.random() * 9 + 1).toFixed(1);

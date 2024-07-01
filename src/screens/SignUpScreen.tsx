@@ -43,7 +43,7 @@ const SignUpScreen = ({ navigation }) => {
       const downloadURL = await getDownloadURL(storageRef);
       return downloadURL;
     } catch (error: any) {
-      console.error("Image upload error:", error);
+      console.error("Image upload error:", error.code, error.message);
       throw error;
     }
   };

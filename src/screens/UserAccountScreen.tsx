@@ -17,6 +17,7 @@ const UserAccountScreen = ({ navigation }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [photoURL, setPhotoURL] = useState(null);
   useEffect(() => {
     const fetchUserData = async () => {
       const user = auth.currentUser;
@@ -28,6 +29,7 @@ const UserAccountScreen = ({ navigation }) => {
           setFirstName(userData.firstName);
           setLastName(userData.lastName);
           setEmail(userData.email);
+          setPhotoURL(userData.photoURL); // Set photo URL from Firestore
         } else {
           console.log("No such document!");
         }
@@ -50,7 +52,9 @@ const UserAccountScreen = ({ navigation }) => {
 
       <View style={styles.profileContainer}>
         <Image
-          source={require("../assets/image/nilo.png")}
+          source={
+            photoURL ? { uri: photoURL } : require("../assets/image/nilo.png")
+          }
           style={styles.avatarImage}
         />
         <Text style={styles.avatarText}>

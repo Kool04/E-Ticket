@@ -22,7 +22,7 @@ const genres: any = {
   36: "History",
   27: "Horror",
   10402: "Music",
-  9648: "Mystry",
+  9648: "Mystery",
   10749: "Romance",
   878: "Science Fiction",
   10770: "TV Movie",
@@ -63,15 +63,15 @@ const MovieCard = (props: any) => {
             {props.title}
           </Text>
           <View style={styles.genreContainer}>
-            {
+            {props.genre &&
+              Array.isArray(props.genre) &&
               props.genre.map((item: any) => {
-                return(
+                return (
                   <View key={item} style={styles.genreBox}>
                     <Text style={styles.genreText}>{genres[item]}</Text>
                   </View>
-                )
-              })
-            }
+                );
+              })}
           </View>
         </View>
       </View>
@@ -112,27 +112,25 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_14,
     color: COLORS.White,
   },
-  genreContainer:{
-    flex:1,
-    flexDirection: 'row',
-    gap:SPACING.space_20,
-    flexWrap:'wrap',
-    justifyContent:'center',
+  genreContainer: {
+    flex: 1,
+    flexDirection: "row",
+    gap: SPACING.space_20,
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
-  genreBox:{
-    borderColor:COLORS.WhiteRGBA50,
-    borderWidth:1,
-    paddingVertical:SPACING.space_4,
+  genreBox: {
+    borderColor: COLORS.WhiteRGBA50,
+    borderWidth: 1,
+    paddingVertical: SPACING.space_4,
     paddingHorizontal: SPACING.space_10,
     borderRadius: BORDERRADIUS.radius_25,
   },
-  genreText:{
-    fontFamily:FONTFAMILY.poppins_regular,
+  genreText: {
+    fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_10,
     color: COLORS.WhiteRGBA75,
-
-
-  }
+  },
 });
 
 export default MovieCard;

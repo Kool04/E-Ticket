@@ -4,10 +4,16 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/HomeScreen";
 import SearchScreen from "../screens/SearchScreen";
 import TicketScreen from "../screens/TicketScreen";
+import HomeScreenConcert from "../screens/HomeScreenConcert";
 import UserAccountScreen from "../screens/UserAccountScreen";
 import { COLORS, FONTSIZE, SPACING } from "../theme/Theme";
-import { Entypo, MaterialCommunityIcons, Feather, AntDesign, Ionicons } from "@expo/vector-icons";
-
+import {
+  Entypo,
+  MaterialCommunityIcons,
+  Feather,
+  AntDesign,
+  Ionicons,
+} from "@expo/vector-icons";
 
 const Tab = createBottomTabNavigator();
 
@@ -30,7 +36,12 @@ const TabNavigator = () => {
         options={{
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <View style={[ styles.activeTabBackground, focused ? {backgroundColor: COLORS.Green} : {}, ]}>
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Green } : {},
+              ]}
+            >
               <Ionicons
                 name="home-sharp"
                 size={FONTSIZE.size_30}
@@ -46,7 +57,12 @@ const TabNavigator = () => {
         options={{
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <View style={[ styles.activeTabBackground, focused ? {backgroundColor: COLORS.Green} : {}, ]}>
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Green } : {},
+              ]}
+            >
               <Feather
                 name="search"
                 size={FONTSIZE.size_30}
@@ -62,7 +78,12 @@ const TabNavigator = () => {
         options={{
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <View style={[ styles.activeTabBackground, focused ? {backgroundColor: COLORS.Green} : {}, ]}>
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Green } : {},
+              ]}
+            >
               <MaterialCommunityIcons
                 name="ticket-confirmation-outline"
                 size={FONTSIZE.size_30}
@@ -78,7 +99,12 @@ const TabNavigator = () => {
         options={{
           tabBarShowLabel: false,
           tabBarIcon: ({ focused }) => (
-            <View style={[ styles.activeTabBackground, focused ? {backgroundColor: COLORS.Green} : {}, ]}>
+            <View
+              style={[
+                styles.activeTabBackground,
+                focused ? { backgroundColor: COLORS.Green } : {},
+              ]}
+            >
               <AntDesign
                 name="user"
                 size={FONTSIZE.size_30}
