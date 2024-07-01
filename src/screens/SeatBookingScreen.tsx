@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   FlatList,
   ToastAndroid,
+  ActivityIndicator,
 } from "react-native";
 import {
   BORDERRADIUS,
@@ -19,7 +20,9 @@ import {
 } from "../theme/Theme";
 import { LinearGradient } from "expo-linear-gradient";
 import AppHeader from "../components/AppHeader";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import * as SecureStore from "expo-secure-store";
+import { getFirestore, doc, getDoc } from "firebase/firestore";
 import { movieDetails } from "../api/apicalls";
 
 type Zone = {
@@ -27,31 +30,23 @@ type Zone = {
   price: number;
 };
 
-type MovieDetails = {
-  images?: { url: string }[];
-};
-
-const getMovieDetails = async (
-  movieid: string
-): Promise<MovieDetails | null> => {
+const getMovieDetails = async (movieid: string) => {
   try {
-    let response = await fetch(movieDetails(movieid));
-    let json = await response.json();
-    return json;
+    const db = getFirestore();
+    const docRef = doc(db, "spectacle", movieid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      console.error("Document not found:", movieid);
+      return null;
+    }
   } catch (error) {
-    console.error("Il y a une erreur dans la fonction getMovieDetails", error);
+    console.error("Error fetching movie details:", error);
     return null;
   }
 };
-
-const timeArray: string[] = [
-  "10:30",
-  "12:30",
-  "14:30",
-  "15:00",
-  "19:30",
-  "21:00",
-];
 
 const zones: Zone[] = [
   { name: "VIP", price: 10000 },
@@ -59,23 +54,9 @@ const zones: Zone[] = [
   { name: "Lite", price: 5000 },
 ];
 
-const generateDate = () => {
-  const date = new Date();
-  let weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  let weekdays = [];
-  for (let i = 0; i < 7; i++) {
-    let tempDate = {
-      date: new Date(date.getTime() + i * 24 * 60 * 60 * 1000).getDate(),
-      day: weekday[new Date(date.getTime() + i * 24 * 60 * 60 * 1000).getDay()],
-    };
-    weekdays.push(tempDate);
-  }
-  return weekdays;
-};
-
 const SeatBookingScreen = ({ navigation, route }: any) => {
-  const [movieData, setMovieData] = useState<MovieDetails | null>(null);
-  const [dateArray, setDateArray] = useState(generateDate());
+  const [movieData, setMovieData] = useState<any>({});
+
   const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(
     null
   );
@@ -86,17 +67,18 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   );
 
   useEffect(() => {
-    const fetchMovieData = async () => {
-      try {
+    if (route.params && route.params.movieid) {
+      console.log("Movie ID selected:", route.params.movieid);
+
+      (async () => {
         const tempMovieData = await getMovieDetails(route.params.movieid);
         setMovieData(tempMovieData);
-      } catch (error) {
-        console.error("Erreur lors du chargement des détails du film :", error);
-      }
-    };
-
-    fetchMovieData();
-  }, []);
+        console.log("Spectacle Data:", tempMovieData);
+      })();
+    } else {
+      console.warn("Movie ID is not defined in route params.");
+    }
+  }, [route.params]);
 
   const selectZone = (zone: Zone) => {
     setSelectedZone(zone);
@@ -114,8 +96,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
           "ticket",
           JSON.stringify({
             zone: selectedZone.name,
-            time: timeArray[selectedTimeIndex],
-            date: dateArray[selectedDateIndex],
+
             ticketImage: route.params.PosterImage,
             ticketBgImage: route.params.BgImage,
           })
@@ -125,8 +106,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
       }
       navigation.navigate("Ticket", {
         zone: selectedZone.name,
-        time: timeArray[selectedTimeIndex],
-        date: dateArray[selectedDateIndex],
+
         ticketImage: route.params.PosterImage,
         ticketBgImage: route.params.BgImage,
       });
@@ -146,29 +126,39 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
       showsVerticalScrollIndicator={false}
     >
       <StatusBar hidden />
-      <View>
-        <ImageBackground
-          source={
-            movieData && movieData.images && movieData.images.length > 5
-              ? { uri: movieData.images[5].url }
-              : undefined
-          }
-          style={styles.ImageBG}
-        >
-          <LinearGradient
-            colors={[COLORS.BlackRGB10, COLORS.Black]}
-            style={styles.linearGradient}
+      {movieData ? (
+        <View>
+          <ImageBackground
+            source={{ uri: movieData.photo_couverture }}
+            style={styles.ImageBG}
           >
-            <View style={styles.appHeaderContainer}>
-              <AppHeader
-                name="closecircleo"
-                header={" "}
-                action={() => navigation.goBack()}
-              />
-            </View>
-          </LinearGradient>
-        </ImageBackground>
-        <Text style={styles.screenText}>Stage This Side</Text>
+            <LinearGradient
+              colors={[COLORS.BlackRGB10, COLORS.Black]}
+              style={styles.linearGradient}
+            >
+              <View style={styles.appHeaderContainer}>
+                <AppHeader
+                  name="closecircleo"
+                  header={" "}
+                  action={() => navigation.goBack()}
+                />
+              </View>
+            </LinearGradient>
+          </ImageBackground>
+        </View>
+      ) : (
+        <View>
+          <ActivityIndicator size="large" color={COLORS.Orange} />
+        </View>
+      )}
+
+      <View style={styles.timeContainer}>
+        <Text style={styles.runtimeText}>{movieData.heure}</Text>
+        <FontAwesome5 name="clock" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.date}</Text>
+        <FontAwesome5 name="map-pin" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.date}</Text>
+        <FontAwesome5 name="calendar" style={styles.clockIcon} />
       </View>
 
       <View style={styles.zoneContainer}>
@@ -186,69 +176,6 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
             <Text style={styles.zoneText}>{zone.name}</Text>
           </TouchableOpacity>
         ))}
-      </View>
-
-      <View>
-        <FlatList
-          data={dateArray}
-          keyExtractor={(item) => item.date.toString()}
-          horizontal
-          bounces={false}
-          contentContainerStyle={styles.containerGap24}
-          renderItem={({ item, index }) => {
-            return (
-              <TouchableOpacity onPress={() => setSelectedDateIndex(index)}>
-                <View
-                  style={[
-                    styles.dateContainer,
-                    index == 0
-                      ? { marginLeft: SPACING.space_24 }
-                      : index == dateArray.length - 1
-                      ? { marginRight: SPACING.space_24 }
-                      : {},
-                    index == selectedDateIndex
-                      ? { backgroundColor: COLORS.Orange }
-                      : {},
-                  ]}
-                >
-                  <Text style={styles.dateText}>{item.date}</Text>
-                  <Text style={styles.dayText}>{item.day}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
-
-      <View style={styles.OuterContainer}>
-        <FlatList
-          data={timeArray}
-          keyExtractor={(item) => item}
-          horizontal
-          bounces={false}
-          contentContainerStyle={styles.containerGap24}
-          renderItem={({ item, index }) => {
-            return (
-              <TouchableOpacity onPress={() => setSelectedTimeIndex(index)}>
-                <View
-                  style={[
-                    styles.timeContainer,
-                    index == 0
-                      ? { marginLeft: SPACING.space_24 }
-                      : index == dateArray.length - 1
-                      ? { marginRight: SPACING.space_24 }
-                      : {},
-                    index == selectedTimeIndex
-                      ? { backgroundColor: COLORS.Orange }
-                      : {},
-                  ]}
-                >
-                  <Text style={styles.timeText}>{item}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
       </View>
 
       <View style={styles.buttonPriceContainer}>
@@ -314,6 +241,11 @@ const styles = StyleSheet.create({
     gap: SPACING.space_20,
     justifyContent: "center",
   },
+  clockIcon: {
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.WhiteRGBA50,
+    marginRight: SPACING.space_8,
+  },
   seatIcon: {
     fontSize: FONTSIZE.size_20,
     color: COLORS.White,
@@ -370,8 +302,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.space_20,
     borderRadius: BORDERRADIUS.radius_20,
     backgroundColor: COLORS.DarkGrey,
-    alignItems: "center",
-    justifyContent: "center",
+    //alignItems: "center",
+    //justifyContent: "center",
+    justifyContent: "space-around",
+    flexDirection: "row",
   },
   timeText: {
     fontFamily: FONTFAMILY.poppins_regular,
@@ -392,6 +326,11 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_14,
     color: COLORS.Grey,
+  },
+  runtimeText: {
+    fontFamily: FONTFAMILY.poppins_medium,
+    fontSize: FONTSIZE.size_14,
+    color: COLORS.White,
   },
   price: {
     fontFamily: FONTFAMILY.poppins_medium,

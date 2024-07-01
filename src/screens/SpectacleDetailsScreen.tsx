@@ -10,7 +10,6 @@ import {
   FlatList,
   TouchableOpacity,
 } from "react-native";
-import { baseImagePath, movieCastDetails, movieDetails } from "../api/apicalls";
 import {
   BORDERRADIUS,
   COLORS,
@@ -29,7 +28,7 @@ import { getFirestore, doc, getDoc } from "firebase/firestore";
 
 const getMovieDetails = async (movieid: string) => {
   const db = getFirestore();
-  const docRef = doc(db, "spectacles", movieid);
+  const docRef = doc(db, "spectacle", movieid); // Utiliser "spectacle" au lieu de "spectacles"
   const docSnap = await getDoc(docRef);
 
   if (docSnap.exists()) {
@@ -42,7 +41,7 @@ const getMovieDetails = async (movieid: string) => {
 
 const SpectacleDetailsScreen = ({ navigation, route }: any) => {
   const [movieData, setMovieData] = useState<any>(undefined);
-  const [movieCastData, setMovieCastData] = useState<any>(undefined);
+  //const [movieCastData, setMovieCastData] = useState<any>(undefined);
   const [rating, setRating] = useState(0);
   const [voteCount, setVoteCount] = useState(0);
 
@@ -58,11 +57,10 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
     const randomRating = (Math.random() * 9 + 1).toFixed(1);
     setRating(randomRating);
 
-    // Générer un nombre aléatoire de votes entre 1000 et 50000
     const randomVoteCount =
       Math.floor(Math.random() * (50000 - 1000 + 1)) + 1000;
     setVoteCount(randomVoteCount);
-  }, []);
+  }, [route.params.movieid]);
 
   if (!movieData) {
     return (
@@ -72,14 +70,14 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
         bounces={false}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.appHeaderContainer}>
+        <View>
           <AppHeader
             name="closecircleo"
             header={" "}
             action={() => navigation.goBack()}
           />
         </View>
-        <View style={styles.loadingContainer}>
+        <View>
           <ActivityIndicator size={"large"} color={COLORS.Orange} />
         </View>
       </ScrollView>
@@ -95,7 +93,7 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
       <StatusBar hidden />
       <View>
         <ImageBackground
-          source={{ uri: movieData.images[5].url }}
+          source={{ uri: movieData.photo_poster }}
           style={styles.imageBG}
         >
           <LinearGradient
@@ -113,116 +111,80 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
         </ImageBackground>
         <View style={[styles.imageBG]}></View>
         <Image
-          source={{ uri: movieData.images[9].url }}
+          source={{ uri: movieData.photo_couverture }}
           style={styles.cardImage}
         />
       </View>
       <View style={styles.timeContainer}>
         <FontAwesome5 name="clock" style={styles.clockIcon} />
-        <Text style={styles.runtimeText}>
-          {new Date(movieData.dates.start.dateTime).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
+        <Text style={styles.runtimeText}>{movieData.heure}</Text>
       </View>
       <View>
-        {movieData.name && <Text style={styles.title}>{movieData.name}</Text>}
+        {movieData.nom_spectacle && (
+          <Text style={styles.title}>{movieData.nom_spectacle}</Text>
+        )}
       </View>
       <View style={styles.genreContainer}>
-        {/* <View>
-          {movieData?.promoters?.length > 0 &&
-            movieData.promoters.map((item: any) => {
-              return (
-                <View style={styles.genreBox} key={item.id}>
-                  <Text style={styles.genreText}>{item.name}</Text>
-                </View>
-              );
-            })}
-        </View>*/}
         <View>
-          {movieData?.classifications?.length > 0 &&
-            movieData.classifications.map((cls: any) => (
-              <View style={styles.genreBox} key={cls.id}>
-                <Text style={styles.genreText}>{cls.genre?.name}</Text>
-              </View>
-            ))}
+          <View style={styles.genreBox}>
+            <Text style={styles.genreText}>{movieData.information1}</Text>
+          </View>
         </View>
         <View>
-          {movieData?.classifications?.length > 0 &&
-            movieData.classifications.map((cls: any) => (
-              <View style={styles.genreBox} key={cls.id}>
-                <Text style={styles.genreText}>{cls.subGenre?.name}</Text>
-              </View>
-            ))}
+          <View style={styles.genreBox}>
+            <Text style={styles.genreText}>{movieData.information2}</Text>
+          </View>
         </View>
         <View>
-          {movieData?.classifications?.length > 0 &&
-            movieData.classifications.map((cls: any) => (
-              <View style={styles.genreBox} key={cls.id}>
-                <Text style={styles.genreText}>{cls.segment?.name}</Text>
-              </View>
-            ))}
+          <View style={styles.genreBox}>
+            <Text style={styles.genreText}>{movieData.information3}</Text>
+          </View>
         </View>
       </View>
-      {movieData.promoter?.description && (
-        <Text style={styles.tagline}>{movieData.promoter.description}</Text>
+      {movieData.description && (
+        <Text style={styles.tagline}>{movieData.label}</Text>
       )}
-
       <View style={styles.infoContainer}>
         <View style={styles.rateContainer}>
           <FontAwesome name="star" style={styles.starIcon} />
           <Text style={styles.runtimeText}>
             {rating} ({voteCount})
           </Text>
-          <Text style={styles.runtimeText}>
-            {new Date(movieData.dates.start.dateTime).toLocaleDateString(
-              "fr-FR",
-              {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              }
-            )}
-          </Text>
+          <Text style={styles.runtimeText}>{movieData.date}</Text>
         </View>
-        {movieData.accessibility && movieData.accessibility.info && (
-          <Text style={styles.descriptionText}>
-            {movieData.accessibility.info}
-          </Text>
+        {movieData.description && (
+          <Text style={styles.descriptionText}>{movieData.description}</Text>
         )}
       </View>
       <View>
-        <CategoryHeader title="Images" />
+        <CategoryHeader title={"Images"} />
         <FlatList
-          data={movieData.images}
+          data={[movieData.photo1, movieData.photo2, movieData.photo3]}
           keyExtractor={(item, index) => index.toString()}
           horizontal
-          contentContainerStyle={styles.containerGAP24} // Assurez-vous de définir styles.containerGAP24 selon vos besoins
+          contentContainerStyle={styles.containerGAP24}
           renderItem={({ item, index }) => (
             <ArtistCard
-              shouldMarginatedAtEnd={index === movieData.images.length - 1}
-              cardWidth={80}
+              cardWidth={120}
+              imagePath={item}
+              shouldMarginatedAtEnd={index === 2} // Indiquez ici l'index de l'élément final
               isFirst={index === 0}
-              isLast={index === movieData.images.length - 1}
-              imagePath={item.url} // Utilisation directe de l'URL de l'image à partir de l'objet item
-              //title={item.ratio} // Vous pouvez ajuster le titre en fonction de vos besoins
-              // subtitle={`Size: ${item.width} x ${item.height}`} // Exemple de sous-titre avec les dimensions de l'image
+              isLast={index === 2} // Assurez-vous que c'est l'index du dernier élément
             />
           )}
         />
-
-        <View>
-          <TouchableOpacity
-            style={styles.buttonBG}
-            onPress={() => {
-              navigation.push("SeatBooking", { movieid: movieData.id });
-            }}
-          >
-            <Text style={styles.buttonText}>Select Seats</Text>
-          </TouchableOpacity>
-        </View>
       </View>
+
+      <TouchableOpacity
+        style={styles.buttonBG}
+        onPress={() => {
+          navigation.push("SeatBooking", {
+            movieid: route.params.movieid,
+          });
+        }}
+      >
+        <Text style={styles.buttonText}>Réserver</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };

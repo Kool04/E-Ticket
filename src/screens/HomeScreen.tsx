@@ -1,4 +1,3 @@
-//////////////////////////////////////HomeScreen/////////////////////////////////////////
 import * as React from "react";
 import { useState, useEffect } from "react";
 import {
@@ -12,12 +11,7 @@ import {
   FlatList,
 } from "react-native";
 import { COLORS, SPACING } from "../theme/Theme";
-import {
-  upcomingMovies,
-  popularMovies,
-  nowPlayingMovies,
-  baseImagePath,
-} from "../api/apicalls";
+
 import InputHeader from "../components/InputHeader";
 import CategoryHeader from "../components/CategoryHeader";
 import SubMovieCard from "../components/SubMovieCard";
@@ -36,110 +30,22 @@ const firestore = getFirestore(app);
 
 const { width } = Dimensions.get("window");
 
-const getUpcomingMoviesList = async () => {
-  try {
-    let response = await fetch(upcomingMovies);
-    let json = await response.json();
-    //console.log("Upcoming Movies Response:", JSON.stringify(json, null, 2)); // Formatted JSON for better readability
-    return json;
-  } catch (error) {
-    console.error(
-      "Il y a un problème dans getUpcomingMoviesList Fonction",
-      error
-    );
-  }
-};
-
-const getNowPlayingMoviesList = async () => {
-  try {
-    let response = await fetch(nowPlayingMovies);
-    let json = await response.json();
-    //console.log("Now Playing Movies Response:", JSON.stringify(json, null, 2)); // Formatted JSON for better readability
-    return json;
-  } catch (error) {
-    console.error(
-      "Il y a un problème dans getNowPlayingMoviesList Fonction",
-      error
-    );
-  }
-};
-
-const getPopularMoviesList = async () => {
-  try {
-    let response = await fetch(popularMovies);
-    let json = await response.json();
-    // console.log("Popular Movies Response:", JSON.stringify(json, null, 2)); // Formatted JSON for better readability
-    return json;
-  } catch (error) {
-    console.error(
-      "Erreur lors de la récupération des films populaires:",
-      error
-    );
-  }
-};
 const HomeScreen = ({ navigation }: any) => {
-  const [nowPlayingMoviesList, setNowPlayingMoviesList] = useState<any[]>([]);
-  const [upcomingMoviesList, setUpcomingMoviesList] = useState<any[]>([]);
-  const [popularMoviesList, setPopularMoviesList] = useState<any[]>([]);
   const [spectacle, setSpectacle] = useState<DocumentData[]>([]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        let tempNowPlaying = await getNowPlayingMoviesList();
-        if (
-          tempNowPlaying &&
-          tempNowPlaying._embedded &&
-          tempNowPlaying._embedded.events
-        ) {
-          setNowPlayingMoviesList([
-            { id: "dummy1" },
-            ...tempNowPlaying._embedded.events,
-            { id: "dummy2" },
-          ]);
-        } else {
-          console.error(
-            "Structure de réponse inattendue pour Now Playing Movies"
-          );
-        }
-
-        let tempUpcoming = await getUpcomingMoviesList();
-        if (
-          tempUpcoming &&
-          tempUpcoming._embedded &&
-          tempUpcoming._embedded.events
-        ) {
-          setUpcomingMoviesList(tempUpcoming._embedded.events);
-        } else {
-          console.error("Structure de réponse inattendue pour Upcoming Movies");
-        }
-
-        let tempPopular = await getPopularMoviesList();
-        if (
-          tempPopular &&
-          tempPopular._embedded &&
-          tempPopular._embedded.events
-        ) {
-          setPopularMoviesList(tempPopular._embedded.events);
-        } else {
-          console.error("Structure de réponse inattendue pour Popular Movies");
-        }
-      } catch (error) {
-        console.error("Erreur lors de la récupération des films:", error);
-      }
-    })();
-
     const fetchMovies = async () => {
       try {
         const moviesCollection = collection(firestore, "spectacle");
         const querySnapshot = await getDocs(moviesCollection);
-        const fetchedMovies: DocumentData[] = []; // Définir explicitement le type pour fetchedMovies
+        const fetchedMovies: DocumentData[] = [];
 
         querySnapshot.forEach((doc) => {
-          fetchedMovies.push(doc.data());
+          fetchedMovies.push({
+            id: doc.id, // Ajouter le Document ID ici
+            ...doc.data(),
+          });
         });
-
-        console.log(fetchedMovies); // Vérifiez les données récupérées depuis Firestore
 
         setSpectacle(fetchedMovies);
       } catch (error) {
@@ -156,28 +62,6 @@ const HomeScreen = ({ navigation }: any) => {
   const searchMoviesFunction = () => {
     navigation.navigate("Search");
   };
-
-  if (
-    nowPlayingMoviesList.length === 0 &&
-    upcomingMoviesList.length === 0 &&
-    popularMoviesList.length === 0
-  ) {
-    return (
-      <ScrollView
-        style={styles.container}
-        bounces={false}
-        contentContainerStyle={styles.scrollViewContainer}
-      >
-        <StatusBar hidden />
-        <View style={styles.InputHeaderContainer}>
-          <InputHeader searchFunction={searchMoviesFunction} />
-        </View>
-        <View style={styles.loadingContainer}>
-          <Text style={styles.text}>Impossible de charger les données.</Text>
-        </View>
-      </ScrollView>
-    );
-  }
 
   return (
     <ScrollView
@@ -216,45 +100,19 @@ const HomeScreen = ({ navigation }: any) => {
             <MovieCard
               shouldMarginatedAtEnd={true}
               cardFunction={() => {
-                console.log({ movieid: item.Document_ID });
+                console.log({ movieid: item.id }); // Utilisation de l'id
                 navigation.push("SpectacleDetails", {
-                  movieid: item.ID_spectacle,
+                  movieid: item.id, // Utilisation de l'id
                 });
               }}
               cardWidth={width * 0.7}
               title={item.nom_spectacle}
               imagePath={imageUrl}
-              vote_count={
-                item.date ? item.date.toDate().toLocaleDateString() : ""
-              }
+              vote_count={item.date}
               genre={item.genre || []} // Ensure genre is defined and is an array
             />
           );
         }}
-      />
-
-      <CategoryHeader title={"Spectacle"} />
-      <FlatList
-        data={upcomingMoviesList}
-        keyExtractor={(item: any) => item.id}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={width * 0.7 + SPACING.space_36}
-        contentContainerStyle={styles.containerGap36}
-        horizontal
-        renderItem={({ item, index }) => (
-          <SubMovieCard
-            shouldMarginatedAtEnd={true}
-            cardFunction={() => {
-              navigation.push("SpectacleDetails", { movieid: item.id });
-            }}
-            cardWidth={width / 3}
-            isFirst={index == 0 ? true : false}
-            isLast={index == upcomingMoviesList?.length - 1 ? true : false}
-            title={item.name}
-            imagePath={item.images[8].url}
-          />
-        )}
       />
     </ScrollView>
   );
