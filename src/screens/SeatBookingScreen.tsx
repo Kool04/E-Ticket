@@ -7,9 +7,9 @@ import {
   ScrollView,
   ImageBackground,
   TouchableOpacity,
-  FlatList,
   ToastAndroid,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import {
   BORDERRADIUS,
@@ -22,8 +22,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import AppHeader from "../components/AppHeader";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import * as SecureStore from "expo-secure-store";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
-import { movieDetails } from "../api/apicalls";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  Timestamp,
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import { firebaseConfig } from "../../firebase-config";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth();
 
 type Zone = {
   name: string;
@@ -32,7 +45,6 @@ type Zone = {
 
 const getMovieDetails = async (movieid: string) => {
   try {
-    const db = getFirestore();
     const docRef = doc(db, "spectacle", movieid);
     const docSnap = await getDoc(docRef);
 
@@ -57,14 +69,9 @@ const zones: Zone[] = [
 const SeatBookingScreen = ({ navigation, route }: any) => {
   const [movieData, setMovieData] = useState<any>({});
 
-  const [selectedDateIndex, setSelectedDateIndex] = useState<number | null>(
-    null
-  );
   const [price, setPrice] = useState(0);
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
-  const [selectedTimeIndex, setSelectedTimeIndex] = useState<number | null>(
-    null
-  );
+  const [ticketCount, setTicketCount] = useState("");
 
   useEffect(() => {
     if (route.params && route.params.movieid) {
@@ -85,34 +92,61 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
     setPrice(zone.price);
   };
 
-  const BookTickets = async () => {
-    if (
-      selectedZone &&
-      selectedTimeIndex !== null &&
-      selectedDateIndex !== null
-    ) {
-      try {
-        await SecureStore.setItemAsync(
-          "ticket",
-          JSON.stringify({
-            zone: selectedZone.name,
-
-            ticketImage: route.params.PosterImage,
-            ticketBgImage: route.params.BgImage,
-          })
-        );
-      } catch (error) {
-        console.log("Il y a un problème dans la fonction BookTickets");
-      }
-      navigation.navigate("Ticket", {
-        zone: selectedZone.name,
-
-        ticketImage: route.params.PosterImage,
-        ticketBgImage: route.params.BgImage,
+  const addTicketToFirestore = async (data) => {
+    try {
+      const docRef = await addDoc(collection(db, "ticket"), {
+        ...data,
+        date: Timestamp.now(),
       });
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+  };
+
+  const BookTickets = async () => {
+    if (selectedZone) {
+      const user = auth.currentUser;
+
+      if (user) {
+        const ticketData = {
+          id_spectacle: route.params.movieid,
+          id_users: user.uid,
+          nombre: ticketCount,
+          prix: selectedZone.price,
+          type: selectedZone.name,
+        };
+
+        try {
+          await addTicketToFirestore(ticketData);
+
+          await SecureStore.setItemAsync(
+            "ticket",
+            JSON.stringify({
+              zone: selectedZone.name,
+              ticketImage: route.params.photo_poster,
+              ticketBgImage: route.params.photo_couverture,
+            })
+          );
+
+          navigation.navigate("Ticket", {
+            zone: selectedZone.name,
+            ticketImage: route.params.photo_poster,
+            ticketBgImage: route.params.photo_couverture,
+          });
+        } catch (error) {
+          console.log("Il y a un problème dans la fonction BookTickets", error);
+        }
+      } else {
+        ToastAndroid.showWithGravity(
+          "Utilisateur non connecté",
+          ToastAndroid.SHORT,
+          ToastAndroid.BOTTOM
+        );
+      }
     } else {
       ToastAndroid.showWithGravity(
-        "Please Select Zone, Date and Time of the Show",
+        "Veuillez sélectionner le prix du billet",
         ToastAndroid.SHORT,
         ToastAndroid.BOTTOM
       );
@@ -155,7 +189,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
       <View style={styles.timeContainer}>
         <Text style={styles.runtimeText}>{movieData.heure}</Text>
         <FontAwesome5 name="clock" style={styles.clockIcon} />
-        <Text style={styles.runtimeText}>{movieData.date}</Text>
+        <Text style={styles.runtimeText}>{movieData.lieu}</Text>
         <FontAwesome5 name="map-pin" style={styles.clockIcon} />
         <Text style={styles.runtimeText}>{movieData.date}</Text>
         <FontAwesome5 name="calendar" style={styles.clockIcon} />
@@ -176,6 +210,24 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
             <Text style={styles.zoneText}>{zone.name}</Text>
           </TouchableOpacity>
         ))}
+      </View>
+
+      <View style={styles.ticketCountContainer}>
+        <Text style={styles.label}>Nombre de billets:</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="numeric"
+          value={ticketCount.toString()}
+          onChangeText={(text) => {
+            const count = parseInt(text, 10);
+            if (!isNaN(count)) {
+              setTicketCount(count);
+              if (selectedZone) {
+                setPrice(selectedZone.price * count); // Update price based on new ticket count
+              }
+            }
+          }}
+        />
       </View>
 
       <View style={styles.buttonPriceContainer}>
@@ -274,19 +326,7 @@ const styles = StyleSheet.create({
   containerGap24: {
     gap: SPACING.space_24,
   },
-  dateContainer: {
-    width: SPACING.space_10 * 7,
-    height: SPACING.space_10 * 10,
-    borderRadius: SPACING.space_10 * 10,
-    backgroundColor: COLORS.DarkGrey,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dateText: {
-    fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_24,
-    color: COLORS.White,
-  },
+
   dayText: {
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_12,
@@ -345,6 +385,31 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_16,
     color: COLORS.White,
     backgroundColor: COLORS.Orange,
+  },
+  label: {
+    // Style for label
+    fontFamily: FONTFAMILY.poppins_medium,
+    fontSize: FONTSIZE.size_16,
+    color: COLORS.White,
+  },
+  input: {
+    // Style for input
+    borderWidth: 1,
+    borderColor: COLORS.White,
+    borderRadius: BORDERRADIUS.radius_10,
+    padding: SPACING.space_10,
+    fontFamily: FONTFAMILY.poppins_regular,
+    fontSize: FONTSIZE.size_16,
+    color: COLORS.White,
+    textAlign: "center",
+    width: 60,
+  },
+  ticketCountContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: SPACING.space_24,
+    marginBottom: SPACING.space_24,
   },
 });
 

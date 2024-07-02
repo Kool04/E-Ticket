@@ -1,14 +1,15 @@
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
 import {
   Text,
   View,
   StyleSheet,
   ScrollView,
-  ActivityIndicator,
   ImageBackground,
-  Image,
-  FlatList,
   TouchableOpacity,
+  ToastAndroid,
+  ActivityIndicator,
+  TextInput, // Import TextInput
 } from "react-native";
 import {
   BORDERRADIUS,
@@ -17,72 +18,139 @@ import {
   FONTSIZE,
   SPACING,
 } from "../theme/Theme";
-import AppHeader from "../components/AppHeader";
-import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
+import AppHeader from "../components/AppHeader";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import { FontAwesome } from "@expo/vector-icons";
-import CategoryHeader from "../components/CategoryHeader";
-import ArtistCard from "../components/ArtistCard";
-import { getFirestore, doc, getDoc } from "firebase/firestore";
+import * as SecureStore from "expo-secure-store";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  Timestamp,
+} from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import { firebaseConfig } from "../../firebase-config";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth();
+
+type Zone = {
+  name: string;
+  price: number;
+};
 
 const getMovieDetails = async (movieid: string) => {
-  const db = getFirestore();
-  const docRef = doc(db, "spectacle", movieid); // Utiliser "spectacle" au lieu de "spectacles"
-  const docSnap = await getDoc(docRef);
+  try {
+    const docRef = doc(db, "spectacle", movieid);
+    const docSnap = await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    return docSnap.data();
-  } else {
-    console.error("No such document!");
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      console.error("Document not found:", movieid);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching movie details:", error);
     return null;
   }
 };
 
-const SpectacleDetailsScreen = ({ navigation, route }: any) => {
-  const [movieData, setMovieData] = useState<any>(undefined);
-  //const [movieCastData, setMovieCastData] = useState<any>(undefined);
-  const [rating, setRating] = useState(0);
-  const [voteCount, setVoteCount] = useState(0);
+const zones: Zone[] = [
+  { name: "VIP", price: 10000 },
+  { name: "Premium", price: 7000 },
+  { name: "Lite", price: 5000 },
+];
+
+const SeatBookingScreen = ({ navigation, route }: any) => {
+  const [movieData, setMovieData] = useState<any>({});
+  const [price, setPrice] = useState(0);
+  const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
+  const [ticketCount, setTicketCount] = useState(1); // State for ticket count
 
   useEffect(() => {
-    console.log("Movie ID selected:", route.params.movieid);
+    if (route.params && route.params.movieid) {
+      console.log("Movie ID selected:", route.params.movieid);
 
-    (async () => {
-      const tempMovieData = await getMovieDetails(route.params.movieid);
-      setMovieData(tempMovieData);
-      console.log("Spectacle Data:", tempMovieData);
-    })();
+      (async () => {
+        const tempMovieData = await getMovieDetails(route.params.movieid);
+        setMovieData(tempMovieData);
+        console.log("Spectacle Data:", tempMovieData);
+      })();
+    } else {
+      console.warn("Movie ID is not defined in route params.");
+    }
+  }, [route.params]);
 
-    const randomRating = (Math.random() * 9 + 1).toFixed(1);
-    setRating(randomRating);
+  const selectZone = (zone: Zone) => {
+    setSelectedZone(zone);
+    setPrice(zone.price * ticketCount); // Update price based on ticket count
+  };
 
-    const randomVoteCount =
-      Math.floor(Math.random() * (50000 - 1000 + 1)) + 1000;
-    setVoteCount(randomVoteCount);
-  }, [route.params.movieid]);
+  const addTicketToFirestore = async (data) => {
+    try {
+      const docRef = await addDoc(collection(db, "ticket"), {
+        ...data,
+        date: Timestamp.now(),
+      });
+      console.log("Document written with ID: ", docRef.id);
+    } catch (e) {
+      console.error("Error adding document: ", e);
+    }
+  };
 
-  if (!movieData) {
-    return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollViewContainer}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.appHeaderContainer}>
-          <AppHeader
-            name="closecircleo"
-            header={" "}
-            action={() => navigation.goBack()}
-          />
-        </View>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size={"large"} color={COLORS.Orange} />
-        </View>
-      </ScrollView>
-    );
-  }
+  const BookTickets = async () => {
+    if (selectedZone) {
+      const user = auth.currentUser;
+
+      if (user) {
+        const ticketData = {
+          id_spectacle: route.params.movieid,
+          id_users: user.uid,
+          nombre: ticketCount, // Use the selected ticket count
+          prix: selectedZone.price * ticketCount,
+          type: selectedZone.name,
+        };
+
+        try {
+          await addTicketToFirestore(ticketData);
+
+          await SecureStore.setItemAsync(
+            "ticket",
+            JSON.stringify({
+              zone: selectedZone.name,
+              ticketImage: route.params.photo_poster,
+              ticketBgImage: route.params.photo_couverture,
+            })
+          );
+
+          navigation.navigate("Ticket", {
+            zone: selectedZone.name,
+            ticketImage: route.params.photo_poster,
+            ticketBgImage: route.params.photo_couverture,
+          });
+        } catch (error) {
+          console.log("Il y a un problème dans la fonction BookTickets", error);
+        }
+      } else {
+        ToastAndroid.showWithGravity(
+          "Utilisateur non connecté",
+          ToastAndroid.SHORT,
+          ToastAndroid.BOTTOM
+        );
+      }
+    } else {
+      ToastAndroid.showWithGravity(
+        "Veuillez sélectionner le prix du billet",
+        ToastAndroid.SHORT,
+        ToastAndroid.BOTTOM
+      );
+    }
+  };
 
   return (
     <ScrollView
@@ -91,135 +159,84 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
       showsVerticalScrollIndicator={false}
     >
       <StatusBar hidden />
-      <View>
-        <ImageBackground
-          source={{ uri: movieData.images[5].url }}
-          style={styles.imageBG}
-        >
-          <LinearGradient
-            colors={[COLORS.BlackRGB10, COLORS.Black]}
-            style={styles.linearGradient}
+      {movieData ? (
+        <View>
+          <ImageBackground
+            source={{ uri: movieData.photo_couverture }}
+            style={styles.ImageBG}
           >
-            <View style={styles.appHeaderContainer}>
-              <AppHeader
-                name="closecircleo"
-                header={" "}
-                action={() => navigation.goBack()}
-              />
-            </View>
-          </LinearGradient>
-        </ImageBackground>
-        <View style={[styles.imageBG]}></View>
-        <Image
-          source={{ uri: movieData.images[9].url }}
-          style={styles.cardImage}
-        />
-      </View>
-      <View style={styles.timeContainer}>
-        <FontAwesome5 name="clock" style={styles.clockIcon} />
-        <Text style={styles.runtimeText}>
-          {new Date(movieData.dates.start.dateTime).toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-      </View>
-      <View>
-        {movieData.name && <Text style={styles.title}>{movieData.name}</Text>}
-      </View>
-      <View style={styles.genreContainer}>
-        {/* <View>
-          {movieData?.promoters?.length > 0 &&
-            movieData.promoters.map((item: any) => {
-              return (
-                <View style={styles.genreBox} key={item.id}>
-                  <Text style={styles.genreText}>{item.name}</Text>
-                </View>
-              );
-            })}
-        </View>*/}
-        <View>
-          {movieData?.classifications?.length > 0 &&
-            movieData.classifications.map((cls: any) => (
-              <View style={styles.genreBox} key={cls.id}>
-                <Text style={styles.genreText}>{cls.genre?.name}</Text>
+            <LinearGradient
+              colors={[COLORS.BlackRGB10, COLORS.Black]}
+              style={styles.linearGradient}
+            >
+              <View style={styles.appHeaderContainer}>
+                <AppHeader
+                  name="closecircleo"
+                  header={" "}
+                  action={() => navigation.goBack()}
+                />
               </View>
-            ))}
+            </LinearGradient>
+          </ImageBackground>
         </View>
+      ) : (
         <View>
-          {movieData?.classifications?.length > 0 &&
-            movieData.classifications.map((cls: any) => (
-              <View style={styles.genreBox} key={cls.id}>
-                <Text style={styles.genreText}>{cls.subGenre?.name}</Text>
-              </View>
-            ))}
+          <ActivityIndicator size="large" color={COLORS.Orange} />
         </View>
-        <View>
-          {movieData?.classifications?.length > 0 &&
-            movieData.classifications.map((cls: any) => (
-              <View style={styles.genreBox} key={cls.id}>
-                <Text style={styles.genreText}>{cls.segment?.name}</Text>
-              </View>
-            ))}
-        </View>
-      </View>
-      {movieData.promoter?.description && (
-        <Text style={styles.tagline}>{movieData.promoter.description}</Text>
       )}
 
-      <View style={styles.infoContainer}>
-        <View style={styles.rateContainer}>
-          <FontAwesome name="star" style={styles.starIcon} />
-          <Text style={styles.runtimeText}>
-            {rating} ({voteCount})
-          </Text>
-          <Text style={styles.runtimeText}>
-            {new Date(movieData.dates.start.dateTime).toLocaleDateString(
-              "fr-FR",
-              {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              }
-            )}
-          </Text>
-        </View>
-        {movieData.accessibility && movieData.accessibility.info && (
-          <Text style={styles.descriptionText}>
-            {movieData.accessibility.info}
-          </Text>
-        )}
+      <View style={styles.timeContainer}>
+        <Text style={styles.runtimeText}>{movieData.heure}</Text>
+        <FontAwesome5 name="clock" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.lieu}</Text>
+        <FontAwesome5 name="map-pin" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.date}</Text>
+        <FontAwesome5 name="calendar" style={styles.clockIcon} />
       </View>
-      <View>
-        <CategoryHeader title="Images" />
-        <FlatList
-          data={movieData.images}
-          keyExtractor={(item, index) => index.toString()}
-          horizontal
-          contentContainerStyle={styles.containerGAP24} // Assurez-vous de définir styles.containerGAP24 selon vos besoins
-          renderItem={({ item, index }) => (
-            <ArtistCard
-              shouldMarginatedAtEnd={index === movieData.images.length - 1}
-              cardWidth={80}
-              isFirst={index === 0}
-              isLast={index === movieData.images.length - 1}
-              imagePath={item.url} // Utilisation directe de l'URL de l'image à partir de l'objet item
-              //title={item.ratio} // Vous pouvez ajuster le titre en fonction de vos besoins
-              // subtitle={`Size: ${item.width} x ${item.height}`} // Exemple de sous-titre avec les dimensions de l'image
-            />
-          )}
-        />
 
-        <View>
+      <View style={styles.zoneContainer}>
+        {zones.map((zone, index) => (
           <TouchableOpacity
-            style={styles.buttonBG}
-            onPress={() => {
-              navigation.push("SeatBooking", { movieid: movieData.id });
-            }}
+            key={index}
+            onPress={() => selectZone(zone)}
+            style={[
+              styles.zone,
+              selectedZone?.name === zone.name && {
+                backgroundColor: COLORS.Orange,
+              },
+            ]}
           >
-            <Text style={styles.buttonText}>Select Seats</Text>
+            <Text style={styles.zoneText}>{zone.name}</Text>
           </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.ticketCountContainer}>
+        <Text style={styles.label}>Nombre de billets:</Text>
+        <TextInput
+          style={styles.input}
+          keyboardType="numeric"
+          value={ticketCount.toString()}
+          onChangeText={(text) => {
+            const count = parseInt(text, 10);
+            if (!isNaN(count)) {
+              setTicketCount(count);
+              if (selectedZone) {
+                setPrice(selectedZone.price * count); // Update price based on new ticket count
+              }
+            }
+          }}
+        />
+      </View>
+
+      <View style={styles.buttonPriceContainer}>
+        <View style={styles.priceContainer}>
+          <Text style={styles.totalPriceText}>Total Price</Text>
+          <Text style={styles.price}>Ar {price}.00</Text>
         </View>
+        <TouchableOpacity onPress={BookTickets}>
+          <Text style={styles.buttonText}>Buy Tickets</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -231,118 +248,53 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.Black,
   },
-  loadingContainer: {
-    flex: 1,
-    alignSelf: "center",
-    justifyContent: "center",
-  },
-  scrollViewContainer: {
-    flex: 1,
-  },
-  appHeaderContainer: {
-    marginHorizontal: SPACING.space_36,
-    marginTop: SPACING.space_20 * 2,
-  },
-  imageBG: {
+  ImageBG: {
     width: "100%",
     aspectRatio: 3072 / 1727,
   },
   linearGradient: {
     height: "100%",
   },
-  cardImage: {
-    width: "60%",
-    aspectRatio: 200 / 300,
-    position: "absolute",
-    bottom: 0,
-    alignSelf: "center",
+  appHeaderContainer: {
+    marginHorizontal: SPACING.space_36,
+    marginTop: SPACING.space_20 * 2,
+  },
+  screenText: {
+    textAlign: "center",
+    fontFamily: FONTFAMILY.poppins_regular,
+    fontSize: FONTSIZE.size_10,
+    color: COLORS.WhiteRGBA15,
+  },
+  zoneContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginVertical: SPACING.space_24,
+  },
+  zone: {
+    paddingVertical: SPACING.space_10,
+    paddingHorizontal: SPACING.space_20,
+    borderRadius: BORDERRADIUS.radius_25,
+    backgroundColor: COLORS.DarkGrey,
+  },
+  zoneText: {
+    fontFamily: FONTFAMILY.poppins_medium,
+    fontSize: FONTSIZE.size_16,
+    color: COLORS.White,
+  },
+  seatContainer: {
+    marginVertical: SPACING.space_20,
+  },
+  containerGap20: {
+    gap: SPACING.space_20,
+  },
+  seatRow: {
+    flexDirection: "row",
+    gap: SPACING.space_20,
+    justifyContent: "center",
   },
   clockIcon: {
     fontSize: FONTSIZE.size_20,
     color: COLORS.WhiteRGBA50,
     marginRight: SPACING.space_8,
   },
-  timeContainer: {
-    display: "flex",
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingTop: SPACING.space_15,
-  },
-  runtimeText: {
-    fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_14,
-    color: COLORS.White,
-  },
-  title: {
-    fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_24,
-    color: COLORS.White,
-    marginHorizontal: SPACING.space_36,
-    marginVertical: SPACING.space_15,
-    textAlign: "center",
-  },
-  genreBox: {
-    borderColor: COLORS.WhiteRGBA50,
-    borderWidth: 1,
-    paddingHorizontal: SPACING.space_10,
-    paddingVertical: SPACING.space_4,
-    borderRadius: BORDERRADIUS.radius_25,
-  },
-  genreText: {
-    fontFamily: FONTFAMILY.poppins_regular,
-    fontSize: FONTSIZE.size_10,
-    color: COLORS.WhiteRGBA75,
-  },
-  genreContainer: {
-    flex: 1,
-    flexDirection: "row",
-    gap: SPACING.space_20,
-    flexWrap: "wrap",
-    justifyContent: "center",
-  },
-  tagline: {
-    fontFamily: FONTFAMILY.poppins_thin,
-    fontSize: FONTSIZE.size_14,
-    fontStyle: "italic",
-    color: COLORS.White,
-    marginHorizontal: SPACING.space_36,
-    marginVertical: SPACING.space_15,
-    textAlign: "center",
-  },
-  starIcon: {
-    fontSize: FONTSIZE.size_20,
-    color: COLORS.Yellow,
-  },
-  infoContainer: {
-    marginHorizontal: SPACING.space_24,
-  },
-  rateContainer: {
-    flexDirection: "row",
-    gap: SPACING.space_10,
-    alignItems: "center",
-  },
-  descriptionText: {
-    fontFamily: FONTFAMILY.poppins_light,
-    fontSize: FONTSIZE.size_14,
-    color: COLORS.White,
-  },
-  containerGAP24: {
-    gap: SPACING.space_24,
-  },
-  buttonBG: {
-    alignItems: "center",
-    marginVertical: SPACING.space_24,
-  },
-  buttonText: {
-    borderRadius: BORDERRADIUS.radius_25 * 2,
-    paddingHorizontal: SPACING.space_24,
-    paddingVertical: SPACING.space_10,
-    backgroundColor: COLORS.Orange,
-    fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_14,
-    color: COLORS.White,
-  },
-});
-
-export default SpectacleDetailsScreen;
+ 
