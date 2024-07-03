@@ -14,6 +14,7 @@ import { initializeApp } from "firebase/app";
 import { firebaseConfig } from "../../firebase-config";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import QRCode from "react-native-qrcode-svg";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -29,22 +30,55 @@ const getSpectacleDetails = async (ticketId: string) => {
     }
 
     const ticketData = ticketDocSnap.data();
+
+    // Récupérer les données du spectacle
     const spectacleDocRef = doc(db, "spectacle", ticketData.id_spectacle);
     const spectacleDocSnap = await getDoc(spectacleDocRef);
 
     if (!spectacleDocSnap.exists()) {
       console.error("No such spectacle document!");
-      return { ...ticketData, photo_couverture: null };
+      return { ...ticketData, photo_couverture: null, userData: null };
     }
 
-    const spectacleData = spectacleDocSnap.data();
+    let spectacleData = spectacleDocSnap.data();
+
+    // Récupérer les données de l'utilisateur
+    const userDataRef = doc(db, "users", ticketData.id_users);
+    const userDataSnap = await getDoc(userDataRef);
+
+    if (!userDataSnap.exists()) {
+      console.error("No such user document!");
+      return {
+        ...ticketData,
+        photo_couverture: spectacleData.photo_couverture,
+        heure: spectacleData.heure,
+        nom_spectacle: spectacleData.nom_spectacle,
+        date: spectacleData.date,
+        lieu: spectacleData.lieu,
+        userData: null,
+      };
+    }
+
+    const userData = userDataSnap.data();
+
+    spectacleData = {
+      ...spectacleData,
+      userData: {
+        nom: userData.firstName, // Correction: Utilisation de "nom" au lieu de "preneom"
+        prenom: userData.lastName, // Correction: Utilisation de "prenom" au lieu de "preneom"
+        email: userData.email,
+      },
+    };
+
     return {
       ...ticketData,
+      photo_poster: spectacleData.photo_poster,
       photo_couverture: spectacleData.photo_couverture,
       heure: spectacleData.heure,
       nom_spectacle: spectacleData.nom_spectacle,
-      date: spectacleData.date,
+      date_spectacle: spectacleData.date,
       lieu: spectacleData.lieu,
+      userData: spectacleData.userData,
     };
   } catch (error) {
     console.error("Error fetching details: ", error);
@@ -81,6 +115,14 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
     );
   }
 
+  const qrCodeValue = JSON.stringify({
+    ticketId: route.params.ticketId,
+    dateReservation: ticketData.date,
+    nom: ticketData.userData.nom,
+    prenom: ticketData.userData.prenom,
+    email: ticketData.userData.email,
+  });
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -94,7 +136,7 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
 
       <View style={styles.ticketContainer}>
         <ImageBackground
-          source={{ uri: ticketData.photo_couverture || "default_image_url" }} // Utiliser une image par défaut si photo_couverture est null
+          source={{ uri: ticketData.photo_poster || "default_image_url" }} // Utiliser une image par défaut si photo_couverture est null
           style={styles.ticketBGImage}
         >
           <LinearGradient
@@ -132,7 +174,9 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
           <View style={styles.ticketDateContainer}>
             <View style={styles.subtitleContainer}>
               <Text style={styles.subtitle}>"{ticketData.nom_spectacle}"</Text>
-              <Text style={styles.subtitle}>Le {ticketData.date}</Text>
+              <Text style={styles.subtitle}>
+                Le {ticketData.date_spectacle}
+              </Text>
               <Text style={styles.subtitle}>Au {ticketData.lieu}</Text>
             </View>
           </View>
@@ -142,18 +186,15 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
               <Text style={styles.subtitle}>{ticketData.heure}</Text>
             </View>
             <View style={styles.subtitleContainer}>
-              <FontAwesome5 name="map-pin" style={styles.clockIcon} />
+              <FontAwesome5 name="crown" style={styles.clockIcon} />
               <Text style={styles.subtitle}>{ticketData.type}</Text>
             </View>
             <View style={styles.subtitleContainer}>
-              <FontAwesome5 name="calendar" style={styles.clockIcon} />
+              <FontAwesome5 name="users" style={styles.clockIcon} />
               <Text style={styles.subtitle}>{ticketData.nombre}</Text>
             </View>
           </View>
-          <Image
-            source={require("../assets/image/barcode.png")}
-            style={styles.barcodeImage}
-          />
+          <QRCode value={qrCodeValue} size={60} />
         </View>
       </View>
     </View>

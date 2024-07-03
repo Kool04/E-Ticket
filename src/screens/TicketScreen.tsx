@@ -6,8 +6,10 @@ import {
   ScrollView,
   ImageBackground,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { useFocusEffect } from "@react-navigation/native"; // Importer useFocusEffect depuis React Navigation
 import AppHeader from "../components/AppHeader";
 import {
   BORDERRADIUS,
@@ -35,19 +37,19 @@ const auth = getAuth();
 
 const TicketScreen = ({ navigation }: any) => {
   const [tickets, setTickets] = useState<any[]>([]);
-  const user = auth.currentUser;
+  const [isLoading, setIsLoading] = useState(true); // Ajout de l'état de chargement
 
-  useEffect(() => {
-    if (user) {
-      fetchTickets(user.uid);
-    }
-  }, [user]);
-
-  const fetchTickets = async (userId: string) => {
+  const fetchUserTickets = async () => {
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       const q = query(
         collection(db, "ticket"),
-        where("id_users", "==", userId)
+        where("id_users", "==", user.uid)
       );
       const querySnapshot = await getDocs(q);
       const ticketsData = await Promise.all(
@@ -57,7 +59,7 @@ const TicketScreen = ({ navigation }: any) => {
             doc(db, "spectacle", ticket.id_spectacle)
           );
           return {
-            id: ticketDoc.id, // Document ID du ticket
+            id: ticketDoc.id,
             ...ticket,
             photo_couverture: spectacleDoc.exists()
               ? spectacleDoc.data().photo_couverture
@@ -71,8 +73,26 @@ const TicketScreen = ({ navigation }: any) => {
       setTickets(ticketsData);
     } catch (error) {
       console.error("Error fetching tickets: ", error);
+    } finally {
+      setIsLoading(false); // Marquer la fin du chargement
     }
   };
+
+  // Utilisation de useFocusEffect pour rafraîchir les données lorsque l'écran est à nouveau focus
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserTickets();
+    }, [])
+  );
+
+  // Affichage conditionnel pendant le chargement
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.Orange} />
+      </View>
+    );
+  }
 
   const formatDate = (timestamp) => {
     const dateObject = timestamp.toDate();
@@ -179,6 +199,12 @@ const styles = StyleSheet.create({
     color: COLORS.Grey,
     textAlign: "center",
     marginTop: SPACING.space_20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: COLORS.Black,
   },
 });
 

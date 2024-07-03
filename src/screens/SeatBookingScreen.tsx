@@ -10,6 +10,7 @@ import {
   ToastAndroid,
   ActivityIndicator,
   TextInput,
+  Alert,
 } from "react-native";
 import {
   BORDERRADIUS,
@@ -71,7 +72,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
 
   const [price, setPrice] = useState(0);
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
-  const [ticketCount, setTicketCount] = useState("");
+  const [ticketCount, setTicketCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (route.params && route.params.movieid) {
@@ -89,7 +90,9 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
 
   const selectZone = (zone: Zone) => {
     setSelectedZone(zone);
-    setPrice(zone.price);
+    if (ticketCount !== null) {
+      setPrice(zone.price * ticketCount); // Mise à jour du prix en fonction du nombre de billets
+    }
   };
 
   const addTicketToFirestore = async (data) => {
@@ -113,7 +116,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
           id_spectacle: route.params.movieid,
           id_users: user.uid,
           nombre: ticketCount,
-          prix: selectedZone.price,
+          prix: selectedZone.price * ticketCount,
           type: selectedZone.name,
         };
 
@@ -128,7 +131,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
               ticketBgImage: route.params.photo_couverture,
             })
           );
-
+          Alert.alert("Succes", "Ticket reserver avec succes");
           navigation.navigate("Ticket", {
             zone: selectedZone.name,
             ticketImage: route.params.photo_poster,
@@ -217,13 +220,26 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
         <TextInput
           style={styles.input}
           keyboardType="numeric"
-          value={ticketCount.toString()}
+          value={ticketCount !== null ? ticketCount.toString() : ""}
           onChangeText={(text) => {
-            const count = parseInt(text, 10);
-            if (!isNaN(count)) {
-              setTicketCount(count);
-              if (selectedZone) {
-                setPrice(selectedZone.price * count); // Update price based on new ticket count
+            if (text === "") {
+              setTicketCount(null); // Réinitialiser si le champ est vide
+              setPrice(0); // Réinitialiser le prix à zéro
+            } else {
+              const count = parseInt(text, 10);
+              if (!isNaN(count)) {
+                if (count > 8) {
+                  ToastAndroid.showWithGravity(
+                    "une personne ne peut pas acheter plus de 8 Tickets",
+                    ToastAndroid.SHORT,
+                    ToastAndroid.BOTTOM
+                  );
+                } else {
+                  setTicketCount(count);
+                  if (selectedZone) {
+                    setPrice(selectedZone.price * count); // Mise à jour du prix en fonction du nombre de billets
+                  }
+                }
               }
             }
           }}

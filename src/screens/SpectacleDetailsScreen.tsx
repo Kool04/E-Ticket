@@ -93,7 +93,7 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
       <StatusBar hidden />
       <View>
         <ImageBackground
-          source={{ uri: movieData.photo_poster }}
+          source={{ uri: movieData.photo_couverture }}
           style={styles.imageBG}
         >
           <LinearGradient
@@ -111,7 +111,7 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
         </ImageBackground>
         <View style={[styles.imageBG]}></View>
         <Image
-          source={{ uri: movieData.photo_couverture }}
+          source={{ uri: movieData.photo_poster }}
           style={styles.cardImage}
         />
       </View>
