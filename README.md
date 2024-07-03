@@ -1,2 +1,2 @@
 # E-Ticket
-Ceci est un application mobile concernant le reservation d'un billet de spectacle
+Ceci est une application mobile concernant le reservation d'un billet de spectacle
