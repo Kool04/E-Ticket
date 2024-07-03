@@ -7,6 +7,7 @@ import SignUpScreen from "./src/screens/SignUpScreen";
 import SpectacleDetailsScreen from "./src/screens/SpectacleDetailsScreen";
 import SeatBookingScreen from "./src/screens/SeatBookingScreen";
 import HomeScreen from "./src/screens/HomeScreen";
+import TicketDetailsScreen from "./src/screens/TicketDetailsScreen";
 import PlaceScreen from "./src/screens/PlaceScreen";
 import * as Font from "expo-font";
 
@@ -24,7 +25,7 @@ const App = () => {
           component={LoginScreen}
           options={{ animation: "default" }}
         />
-         <Stack.Screen
+        <Stack.Screen
           name="SignUp"
           component={SignUpScreen}
           options={{ animation: "default" }}
@@ -37,6 +38,11 @@ const App = () => {
         <Stack.Screen
           name="SpectacleDetails"
           component={SpectacleDetailsScreen}
+          options={{ animation: "slide_from_right" }}
+        />
+        <Stack.Screen
+          name="TicketDetails"
+          component={TicketDetailsScreen}
           options={{ animation: "slide_from_right" }}
         />
         <Stack.Screen
