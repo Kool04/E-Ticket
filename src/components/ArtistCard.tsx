@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   cardImage: {
     aspectRatio: 1920 / 2880,
-    borderRadius: BORDERRADIUS.radius_25 * 4,
+    borderRadius: BORDERRADIUS.radius_20 * 1,
   },
   title: {
     alignSelf: "stretch",

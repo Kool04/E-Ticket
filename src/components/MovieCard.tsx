@@ -54,24 +54,24 @@ const MovieCard = (props: any) => {
         />
         <View>
           <View style={styles.rateContainer}>
-            <FontAwesome name="star" style={styles.starIcon} />
-            <Text style={styles.voteText}>
-              {props.vote_average} ({props.vote_count})
-            </Text>
+            <FontAwesome name="calendar" style={styles.starIcon} />
+            <Text style={styles.voteText}>{props.vote_count}</Text>
+            <FontAwesome name="map-pin" style={styles.mapIcon} />
+            <Text style={styles.voteText}>{props.lieu}</Text>
           </View>
           <Text numberOfLines={1} style={styles.textTitle}>
             {props.title}
           </Text>
           <View style={styles.genreContainer}>
-            {props.genre &&
-              Array.isArray(props.genre) &&
-              props.genre.map((item: any) => {
-                return (
-                  <View key={item} style={styles.genreBox}>
-                    <Text style={styles.genreText}>{genres[item]}</Text>
-                  </View>
-                );
-              })}
+            <View style={styles.genreBox}>
+              <Text style={styles.genreText}> {props.information1}</Text>
+            </View>
+            <View style={styles.genreBox}>
+              <Text style={styles.genreText}> {props.information2}</Text>
+            </View>
+            <View style={styles.genreBox}>
+              <Text style={styles.genreText}> {props.information3}</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -105,7 +105,11 @@ const styles = StyleSheet.create({
   },
   starIcon: {
     fontSize: FONTSIZE.size_20,
-    color: COLORS.Yellow,
+    color: COLORS.WhiteRGBA50,
+  },
+  mapIcon: {
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.Red,
   },
   voteText: {
     fontFamily: FONTFAMILY.poppins_medium,

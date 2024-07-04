@@ -50,7 +50,17 @@ const getMovieDetails = async (movieid: string) => {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return docSnap.data();
+      const data = docSnap.data();
+      const prix_premium = data.prix_premium || 0;
+      const prix_vip = data.prix_vip || 0;
+      const prix_lite = data.prix_lite || 0;
+
+      return {
+        ...data,
+        prix_premium,
+        prix_vip,
+        prix_lite,
+      };
     } else {
       console.error("Document not found:", movieid);
       return null;
@@ -61,37 +71,33 @@ const getMovieDetails = async (movieid: string) => {
   }
 };
 
-const zones: Zone[] = [
-  { name: "VIP", price: 10000 },
-  { name: "Premium", price: 7000 },
-  { name: "Lite", price: 5000 },
-];
-
 const SeatBookingScreen = ({ navigation, route }: any) => {
   const [movieData, setMovieData] = useState<any>({});
-
   const [price, setPrice] = useState(0);
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [ticketCount, setTicketCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (route.params && route.params.movieid) {
-      console.log("Movie ID selected:", route.params.movieid);
-
       (async () => {
         const tempMovieData = await getMovieDetails(route.params.movieid);
         setMovieData(tempMovieData);
-        console.log("Spectacle Data:", tempMovieData);
       })();
     } else {
       console.warn("Movie ID is not defined in route params.");
     }
   }, [route.params]);
 
+  const zones: Zone[] = [
+    { name: "VIP", price: movieData.prix_vip || 0 },
+    { name: "Premium", price: movieData.prix_premium || 0 },
+    { name: "Lite", price: movieData.prix_lite || 0 },
+  ];
+
   const selectZone = (zone: Zone) => {
     setSelectedZone(zone);
     if (ticketCount !== null) {
-      setPrice(zone.price * ticketCount); // Mise à jour du prix en fonction du nombre de billets
+      setPrice(zone.price * ticketCount);
     }
   };
 
@@ -155,7 +161,6 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
       );
     }
   };
-
   return (
     <ScrollView
       style={styles.container}
@@ -196,6 +201,13 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
         <FontAwesome5 name="map-pin" style={styles.clockIcon} />
         <Text style={styles.runtimeText}>{movieData.date}</Text>
         <FontAwesome5 name="calendar" style={styles.clockIcon} />
+      </View>
+      <View style={styles.prixContainer}>
+        <Text style={styles.runtimeText}>VIP: {movieData.prix_vip}Ar</Text>
+        <Text style={styles.runtimeText}>
+          Premium: {movieData.prix_premium} Ar
+        </Text>
+        <Text style={styles.runtimeText}>Lite: {movieData.prix_lite} Ar</Text>
       </View>
 
       <View style={styles.zoneContainer}>
@@ -264,6 +276,12 @@ const styles = StyleSheet.create({
     display: "flex",
     flex: 1,
     backgroundColor: COLORS.Black,
+  },
+  priceText: {
+    fontFamily: FONTFAMILY.poppins_regular,
+    fontSize: FONTSIZE.size_12,
+    color: COLORS.White,
+    marginTop: SPACING.space_4,
   },
   ImageBG: {
     width: "100%",
@@ -363,6 +381,19 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     flexDirection: "row",
   },
+  prixContainer: {
+    paddingVertical: SPACING.space_10,
+    borderWidth: 1,
+    //borderColor: COLORS.WhiteRGBA50,
+    paddingHorizontal: SPACING.space_20,
+    borderRadius: BORDERRADIUS.radius_20,
+    backgroundColor: COLORS.DarkGrey,
+    //alignItems: "center",
+    //justifyContent: "center",
+    justifyContent: "space-around",
+    flexDirection: "row",
+  },
+
   timeText: {
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_14,

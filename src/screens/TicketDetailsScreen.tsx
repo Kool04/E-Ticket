@@ -107,7 +107,7 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
         <View style={styles.appHeaderContainer}>
           <AppHeader
             name="closecircleo"
-            header={"My Ticket"}
+            header={"Mon Ticket"}
             action={() => navigation.goBack()}
           />
         </View>
@@ -173,7 +173,7 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
           ></View>
           <View style={styles.ticketDateContainer}>
             <View style={styles.subtitleContainer}>
-              <Text style={styles.subtitle}>"{ticketData.nom_spectacle}"</Text>
+              <Text style={styles.title}>"{ticketData.nom_spectacle}"</Text>
               <Text style={styles.subtitle}>
                 Le {ticketData.date_spectacle}
               </Text>
@@ -257,6 +257,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_14,
+    color: COLORS.White,
+  },
+  title: {
+    fontFamily: FONTFAMILY.poppins_regular,
+    fontSize: FONTSIZE.size_20,
     color: COLORS.White,
   },
   clockIcon: {

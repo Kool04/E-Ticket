@@ -131,7 +131,10 @@ const HomeScreen = ({ navigation }: any) => {
               title={item.nom_spectacle}
               imagePath={imageUrl}
               vote_count={item.date}
-              genre={item.genre || []}
+              lieu={item.lieu}
+              information1={item.information1}
+              information2={item.information2}
+              information3={item.information3}
             />
           );
         }}
@@ -174,7 +177,10 @@ const HomeScreen = ({ navigation }: any) => {
               title={item.nom_spectacle}
               imagePath={imageUrl}
               vote_count={item.date}
-              genre={item.genre || []}
+              lieu={item.lieu}
+              information1={item.information1}
+              information2={item.information2}
+              information3={item.information3}
             />
           );
         }}

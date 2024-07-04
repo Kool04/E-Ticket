@@ -116,8 +116,12 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
         />
       </View>
       <View style={styles.timeContainer}>
+        <FontAwesome5 name="map-pin" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.lieu}</Text>
         <FontAwesome5 name="clock" style={styles.clockIcon} />
         <Text style={styles.runtimeText}>{movieData.heure}</Text>
+        <FontAwesome5 name="calendar" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.date}</Text>
       </View>
       <View>
         {movieData.nom_spectacle && (
@@ -150,7 +154,6 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
           <Text style={styles.runtimeText}>
             {rating} ({voteCount})
           </Text>
-          <Text style={styles.runtimeText}>{movieData.date}</Text>
         </View>
         {movieData.description && (
           <Text style={styles.descriptionText}>{movieData.description}</Text>
@@ -165,7 +168,7 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
           contentContainerStyle={styles.containerGAP24}
           renderItem={({ item, index }) => (
             <ArtistCard
-              cardWidth={120}
+              cardWidth={160}
               imagePath={item}
               shouldMarginatedAtEnd={index === 2} // Indiquez ici l'index de l'élément final
               isFirst={index === 0}
@@ -224,7 +227,7 @@ const styles = StyleSheet.create({
   clockIcon: {
     fontSize: FONTSIZE.size_20,
     color: COLORS.WhiteRGBA50,
-    marginRight: SPACING.space_8,
+    //marginRight: SPACING.space_8,
   },
   timeContainer: {
     display: "flex",
@@ -233,10 +236,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: SPACING.space_15,
   },
+
   runtimeText: {
     fontFamily: FONTFAMILY.poppins_medium,
     fontSize: FONTSIZE.size_14,
     color: COLORS.White,
+    marginHorizontal: SPACING.space_8,
   },
   title: {
     fontFamily: FONTFAMILY.poppins_regular,
