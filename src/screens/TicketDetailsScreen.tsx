@@ -136,11 +136,11 @@ const TicketDetailsScreen = ({ navigation, route }: any) => {
 
       <View style={styles.ticketContainer}>
         <ImageBackground
-          source={{ uri: ticketData.photo_poster || "default_image_url" }} // Utiliser une image par défaut si photo_couverture est null
+          source={{ uri: ticketData.photo_poster }} // Utiliser une image par défaut si photo_couverture est null
           style={styles.ticketBGImage}
         >
           <LinearGradient
-            colors={[COLORS.OrangeRGBA0, COLORS.Orange]}
+            colors={[COLORS.BlackRGB10, COLORS.Green]}
             style={styles.linearGradient}
           >
             <View
@@ -231,11 +231,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 3,
     width: 300,
     alignSelf: "center",
-    backgroundColor: COLORS.Orange,
+    backgroundColor: COLORS.Green,
     borderStyle: "dashed",
   },
   ticketFooter: {
-    backgroundColor: COLORS.Orange,
+    backgroundColor: COLORS.Green,
     width: 300,
     alignItems: "center",
     paddingBottom: SPACING.space_36,

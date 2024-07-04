@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   Text,
   View,
@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   TextInput,
   Alert,
+  Animated,
 } from "react-native";
 import {
   BORDERRADIUS,
@@ -34,6 +35,7 @@ import {
 import { getAuth } from "firebase/auth";
 import { initializeApp } from "firebase/app";
 import { firebaseConfig } from "../../firebase-config";
+import Swiper from "react-native-swiper";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -76,6 +78,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   const [price, setPrice] = useState(0);
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [ticketCount, setTicketCount] = useState<number | null>(null);
+  const animation = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (route.params && route.params.movieid) {
@@ -91,7 +94,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
   const zones: Zone[] = [
     { name: "VIP", price: movieData.prix_vip || 0 },
     { name: "Premium", price: movieData.prix_premium || 0 },
-    { name: "Lite", price: movieData.prix_lite || 0 },
+    { name: "Simple", price: movieData.prix_lite || 0 },
   ];
 
   const selectZone = (zone: Zone) => {
@@ -101,7 +104,13 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
     }
   };
 
-  const addTicketToFirestore = async (data) => {
+  const addTicketToFirestore = async (data: {
+    id_spectacle: any;
+    id_users: string;
+    nombre: number | null;
+    prix: number;
+    type: string;
+  }) => {
     try {
       const docRef = await addDoc(collection(db, "ticket"), {
         ...data,
@@ -161,6 +170,24 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
       );
     }
   };
+
+  const animateButton = () => {
+    Animated.sequence([
+      Animated.timing(animation, {
+        toValue: 1.1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(animation, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      BookTickets();
+    });
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -185,29 +212,32 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
                   action={() => navigation.goBack()}
                 />
               </View>
+              <View style={styles.titleContainer}>
+                <Text style={styles.titleText}>{movieData.nom_spectacle}</Text>
+              </View>
             </LinearGradient>
           </ImageBackground>
         </View>
       ) : (
         <View>
-          <ActivityIndicator size="large" color={COLORS.Orange} />
+          <ActivityIndicator size="large" color={COLORS.Green} />
         </View>
       )}
 
       <View style={styles.timeContainer}>
-        <Text style={styles.runtimeText}>{movieData.heure}</Text>
         <FontAwesome5 name="clock" style={styles.clockIcon} />
+        <Text style={styles.runtimeText}>{movieData.heure}</Text>
+        <FontAwesome5 name="map-pin" style={styles.mapIcon} />
         <Text style={styles.runtimeText}>{movieData.lieu}</Text>
-        <FontAwesome5 name="map-pin" style={styles.clockIcon} />
+        <FontAwesome5 name="calendar" style={styles.calendarIcon} />
         <Text style={styles.runtimeText}>{movieData.date}</Text>
-        <FontAwesome5 name="calendar" style={styles.clockIcon} />
       </View>
       <View style={styles.prixContainer}>
         <Text style={styles.runtimeText}>VIP: {movieData.prix_vip}Ar</Text>
         <Text style={styles.runtimeText}>
           Premium: {movieData.prix_premium} Ar
         </Text>
-        <Text style={styles.runtimeText}>Lite: {movieData.prix_lite} Ar</Text>
+        <Text style={styles.runtimeText}>simple: {movieData.prix_lite} Ar</Text>
       </View>
 
       <View style={styles.zoneContainer}>
@@ -218,7 +248,7 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
             style={[
               styles.zone,
               selectedZone?.name === zone.name && {
-                backgroundColor: COLORS.Orange,
+                backgroundColor: COLORS.Green,
               },
             ]}
           >
@@ -239,34 +269,41 @@ const SeatBookingScreen = ({ navigation, route }: any) => {
               setPrice(0); // Réinitialiser le prix à zéro
             } else {
               const count = parseInt(text, 10);
-              if (!isNaN(count)) {
-                if (count > 8) {
-                  ToastAndroid.showWithGravity(
-                    "une personne ne peut pas acheter plus de 8 Tickets",
-                    ToastAndroid.SHORT,
-                    ToastAndroid.BOTTOM
-                  );
-                } else {
-                  setTicketCount(count);
-                  if (selectedZone) {
-                    setPrice(selectedZone.price * count); // Mise à jour du prix en fonction du nombre de billets
-                  }
-                }
+              setTicketCount(count);
+              if (selectedZone) {
+                setPrice(selectedZone.price * count);
               }
             }
           }}
         />
       </View>
 
-      <View style={styles.buttonPriceContainer}>
-        <View style={styles.priceContainer}>
-          <Text style={styles.totalPriceText}>Total Price</Text>
-          <Text style={styles.price}>Ar {price}.00</Text>
-        </View>
-        <TouchableOpacity onPress={BookTickets}>
-          <Text style={styles.buttonText}>Buy Tickets</Text>
-        </TouchableOpacity>
+      <View style={styles.priceContainer}>
+        <Text style={styles.label}>Prix total:</Text>
+        <Text style={styles.price}>{price} Ar</Text>
       </View>
+
+      <View style={styles.noticeContainer}>
+        <Text style={styles.noticeText}>
+          - Veuillez bien verifier avant de valider vos Tickets.
+        </Text>
+        <Text style={styles.noticeText}>
+          - Souvenez vous bien de vos login ou vous avez valider le Tickets.
+        </Text>
+        <Text style={styles.noticeText}>
+          -Une personne ne peut pas reserver plus de 8 Tickets par
+          spectacle/concert.
+        </Text>
+        <Text style={styles.noticeText}>
+          - Les tickets se supprimeront automatiquement apres la date du
+          spectacle/concert.
+        </Text>
+      </View>
+      <Animated.View style={{ transform: [{ scale: animation }] }}>
+        <TouchableOpacity style={styles.btn} onPress={animateButton}>
+          <Text style={styles.buttonText}>Valider</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </ScrollView>
   );
 };
@@ -294,6 +331,29 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.space_36,
     marginTop: SPACING.space_20 * 2,
   },
+  mapIcon: {
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.Red,
+    //marginRight: SPACING.space_8,
+    marginLeft: SPACING.space_8,
+  },
+  titleContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    // padding: SPACING * 2,
+  },
+  titleText: {
+    color: COLORS.White,
+    fontSize: FONTSIZE.size_20,
+    fontFamily: FONTFAMILY.poppins_regular,
+    textAlign: "center",
+  },
+  calendarIcon: {
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.White,
+    marginLeft: SPACING.space_8,
+  },
   screenText: {
     textAlign: "center",
     fontFamily: FONTFAMILY.poppins_regular,
@@ -310,6 +370,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.space_20,
     borderRadius: BORDERRADIUS.radius_25,
     backgroundColor: COLORS.DarkGrey,
+  },
+  noticeText: {
+    color: COLORS.White,
+    fontSize: FONTSIZE.size_10,
+    fontFamily: FONTFAMILY.poppins_regular,
+  },
+  btn: {
+    backgroundColor: COLORS.Green,
+    //borderRadius: BORDERRADIUS.Large,
+    justifyContent: "center",
+    alignItems: "center",
   },
   zoneText: {
     fontFamily: FONTFAMILY.poppins_medium,
@@ -372,7 +443,7 @@ const styles = StyleSheet.create({
   timeContainer: {
     paddingVertical: SPACING.space_10,
     borderWidth: 1,
-    borderColor: COLORS.WhiteRGBA50,
+    // borderColor: COLORS.WhiteRGBA50,
     paddingHorizontal: SPACING.space_20,
     borderRadius: BORDERRADIUS.radius_20,
     backgroundColor: COLORS.DarkGrey,
@@ -393,7 +464,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     flexDirection: "row",
   },
-
+  noticeContainer: {
+    paddingVertical: SPACING.space_10,
+    borderWidth: 1,
+    //borderColor: COLORS.WhiteRGBA50,
+    paddingHorizontal: SPACING.space_20,
+    borderRadius: BORDERRADIUS.radius_20,
+    backgroundColor: COLORS.DarkGrey,
+    //alignItems: "center",
+    //justifyContent: "center",
+    justifyContent: "space-around",
+    // flexDirection: "row",
+  },
   timeText: {
     fontFamily: FONTFAMILY.poppins_regular,
     fontSize: FONTSIZE.size_14,
@@ -431,7 +513,7 @@ const styles = StyleSheet.create({
     fontFamily: FONTFAMILY.poppins_semibold,
     fontSize: FONTSIZE.size_16,
     color: COLORS.White,
-    backgroundColor: COLORS.Orange,
+    backgroundColor: COLORS.Green,
   },
   label: {
     // Style for label

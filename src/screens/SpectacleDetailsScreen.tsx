@@ -78,7 +78,7 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
           />
         </View>
         <View>
-          <ActivityIndicator size={"large"} color={COLORS.Orange} />
+          <ActivityIndicator size={"large"} color={COLORS.Green} />
         </View>
       </ScrollView>
     );
@@ -116,11 +116,11 @@ const SpectacleDetailsScreen = ({ navigation, route }: any) => {
         />
       </View>
       <View style={styles.timeContainer}>
-        <FontAwesome5 name="map-pin" style={styles.clockIcon} />
+        <FontAwesome5 name="map-pin" style={styles.mapIcon} />
         <Text style={styles.runtimeText}>{movieData.lieu}</Text>
         <FontAwesome5 name="clock" style={styles.clockIcon} />
         <Text style={styles.runtimeText}>{movieData.heure}</Text>
-        <FontAwesome5 name="calendar" style={styles.clockIcon} />
+        <FontAwesome5 name="calendar" style={styles.calendarIcon} />
         <Text style={styles.runtimeText}>{movieData.date}</Text>
       </View>
       <View>
@@ -228,6 +228,18 @@ const styles = StyleSheet.create({
     fontSize: FONTSIZE.size_20,
     color: COLORS.WhiteRGBA50,
     //marginRight: SPACING.space_8,
+    marginLeft: SPACING.space_8,
+  },
+  mapIcon: {
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.Red,
+    //marginRight: SPACING.space_8,
+    marginLeft: SPACING.space_8,
+  },
+  calendarIcon: {
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.White,
+    marginLeft: SPACING.space_8,
   },
   timeContainer: {
     display: "flex",
@@ -307,7 +319,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDERRADIUS.radius_25 * 2,
     paddingHorizontal: SPACING.space_24,
     paddingVertical: SPACING.space_10,
-    backgroundColor: COLORS.Orange,
+    backgroundColor: COLORS.Green,
     fontFamily: FONTFAMILY.poppins_medium,
     fontSize: FONTSIZE.size_14,
     color: COLORS.White,

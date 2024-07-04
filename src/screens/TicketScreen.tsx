@@ -7,10 +7,12 @@ import {
   ImageBackground,
   TouchableOpacity,
   ActivityIndicator,
+  ToastAndroid,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useFocusEffect } from "@react-navigation/native"; // Importer useFocusEffect depuis React Navigation
 import AppHeader from "../components/AppHeader";
+import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import {
   BORDERRADIUS,
   COLORS,
@@ -51,6 +53,11 @@ const TicketScreen = ({ navigation }: any) => {
         collection(db, "ticket"),
         where("id_users", "==", user.uid)
       );
+      ToastAndroid.showWithGravity(
+        "Les tickets se supprimeront automatique apres la date du spectacle",
+        ToastAndroid.SHORT,
+        ToastAndroid.BOTTOM
+      );
       const querySnapshot = await getDocs(q);
       const ticketsData = await Promise.all(
         querySnapshot.docs.map(async (ticketDoc) => {
@@ -89,7 +96,7 @@ const TicketScreen = ({ navigation }: any) => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.Orange} />
+        <ActivityIndicator size="large" color={COLORS.Green} />
       </View>
     );
   }
@@ -131,16 +138,19 @@ const TicketScreen = ({ navigation }: any) => {
                 >
                   <View style={styles.ticketInfo}>
                     <Text style={styles.ticketText}>
-                      {ticket.nom_spectacle}
+                      "{ticket.nom_spectacle}"
                     </Text>
                     <Text style={styles.ticketText}>
+                      <FontAwesome5 name="crown" style={styles.clockIcon} />{" "}
                       {ticket.type} - Ar {ticket.prix}
                     </Text>
                     <Text style={styles.ticketText}>
-                      Nombre: {ticket.nombre}
+                      <FontAwesome5 name="users" style={styles.clockIcon} />{" "}
+                      {ticket.nombre}
                     </Text>
                     <Text style={styles.ticketText}>
-                      Reserver le: {formatDate(ticket.date)}
+                      <FontAwesome5 name="calendar" style={styles.clockIcon} />{" "}
+                      {formatDate(ticket.date)}
                     </Text>
                   </View>
                 </ImageBackground>
@@ -159,6 +169,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.Black,
+  },
+  clockIcon: {
+    fontSize: FONTSIZE.size_16,
+    color: COLORS.White,
+    paddingBottom: SPACING.space_10,
   },
   appHeaderContainer: {
     marginHorizontal: SPACING.space_36,

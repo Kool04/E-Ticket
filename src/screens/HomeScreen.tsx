@@ -19,9 +19,8 @@ import {
   BORDERRADIUS,
 } from "../theme/Theme";
 
-import InputHeader from "../components/InputHeader";
 import CategoryHeader from "../components/CategoryHeader";
-import SubMovieCard from "../components/SubMovieCard";
+
 import MovieCard from "../components/MovieCard";
 import { firebaseConfig } from "../../firebase-config";
 import { initializeApp } from "firebase/app";
