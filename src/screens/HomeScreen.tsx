@@ -9,8 +9,15 @@ import {
   ScrollView,
   StatusBar,
   FlatList,
+  TextInput,
 } from "react-native";
-import { COLORS, SPACING } from "../theme/Theme";
+import {
+  COLORS,
+  SPACING,
+  FONTFAMILY,
+  FONTSIZE,
+  BORDERRADIUS,
+} from "../theme/Theme";
 
 import InputHeader from "../components/InputHeader";
 import CategoryHeader from "../components/CategoryHeader";
@@ -24,6 +31,7 @@ import {
   getDocs,
   DocumentData,
 } from "firebase/firestore";
+import { Feather } from "@expo/vector-icons";
 
 const app = initializeApp(firebaseConfig);
 const firestore = getFirestore(app);
@@ -32,6 +40,7 @@ const { width } = Dimensions.get("window");
 
 const HomeScreen = ({ navigation }: any) => {
   const [spectacle, setSpectacle] = useState<DocumentData[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -42,7 +51,7 @@ const HomeScreen = ({ navigation }: any) => {
 
         querySnapshot.forEach((doc) => {
           fetchedMovies.push({
-            id: doc.id, // Ajouter le Document ID ici
+            id: doc.id,
             ...doc.data(),
           });
         });
@@ -59,8 +68,12 @@ const HomeScreen = ({ navigation }: any) => {
     fetchMovies();
   }, []);
 
+  const filteredSpectacle = spectacle.filter((item) =>
+    item.nom_spectacle.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const searchMoviesFunction = () => {
-    navigation.navigate("Search");
+    navigation.navigate("Search", { searchTerm });
   };
 
   return (
@@ -71,12 +84,21 @@ const HomeScreen = ({ navigation }: any) => {
     >
       <StatusBar hidden />
       <View style={styles.InputHeaderContainer}>
-        <InputHeader searchFunction={searchMoviesFunction} />
+        <TextInput
+          style={styles.textInput}
+          placeholder="Rechercher un spectacle..."
+          placeholderTextColor={COLORS.WhiteRGBA32}
+          value={searchTerm}
+          onChangeText={setSearchTerm}
+        />
+
+        <Feather name="search" size={FONTSIZE.size_20} color={COLORS.Green} />
       </View>
+
       <CategoryHeader title={"Concert"} />
 
       <FlatList
-        data={spectacle}
+        data={filteredSpectacle.filter((item) => item.categories === "concert")}
         keyExtractor={(item) => item.id}
         bounces={false}
         showsVerticalScrollIndicator={false}
@@ -100,16 +122,59 @@ const HomeScreen = ({ navigation }: any) => {
             <MovieCard
               shouldMarginatedAtEnd={true}
               cardFunction={() => {
-                console.log({ movieid: item.id }); // Utilisation de l'id
+                console.log({ movieid: item.id });
                 navigation.push("SpectacleDetails", {
-                  movieid: item.id, // Utilisation de l'id
+                  movieid: item.id,
                 });
               }}
               cardWidth={width * 0.7}
               title={item.nom_spectacle}
               imagePath={imageUrl}
               vote_count={item.date}
-              genre={item.genre || []} // Ensure genre is defined and is an array
+              genre={item.genre || []}
+            />
+          );
+        }}
+      />
+
+      <CategoryHeader title={"Spectacle"} />
+      <FlatList
+        data={filteredSpectacle.filter(
+          (item) => item.categories === "spectacle"
+        )}
+        keyExtractor={(item) => item.id}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        snapToInterval={width * 0.7 + SPACING.space_36}
+        contentContainerStyle={styles.containerGap36}
+        horizontal
+        renderItem={({ item }) => {
+          if (!item || !item.nom_spectacle) {
+            return (
+              <View
+                style={{
+                  width: (width - (width * 0.7 + SPACING.space_36 * 2)) / 2,
+                }}
+              ></View>
+            );
+          }
+
+          const imageUrl = item.photo_poster;
+
+          return (
+            <MovieCard
+              shouldMarginatedAtEnd={true}
+              cardFunction={() => {
+                console.log({ movieid: item.id });
+                navigation.push("SpectacleDetails", {
+                  movieid: item.id,
+                });
+              }}
+              cardWidth={width * 0.7}
+              title={item.nom_spectacle}
+              imagePath={imageUrl}
+              vote_count={item.date}
+              genre={item.genre || []}
             />
           );
         }}
@@ -134,15 +199,26 @@ const styles = StyleSheet.create({
   InputHeaderContainer: {
     marginHorizontal: SPACING.space_36,
     marginTop: SPACING.space_28,
+    display: "flex",
+    paddingVertical: SPACING.space_8,
+    paddingHorizontal: SPACING.space_24,
+    borderWidth: 2,
+    borderColor: COLORS.WhiteRGBA15,
+    borderRadius: BORDERRADIUS.radius_25,
+    flexDirection: "row",
   },
-  contentContainer: {
-    // Ajoutez ici le style pour le conteneur de contenu après le chargement
-  },
-  text: {
+
+  textInput: {
+    width: "90%",
+    fontFamily: FONTFAMILY.poppins_regular,
+    fontSize: FONTSIZE.size_14,
     color: COLORS.White,
   },
   containerGap36: {
     gap: SPACING.space_36,
+  },
+  text: {
+    color: COLORS.White,
   },
 });
 

@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { Text, View, StyleSheet } from 'react-native';
+import * as React from "react";
+import { Text, View, StyleSheet } from "react-native";
 
 interface SearchScreenProps {}
 
@@ -14,5 +14,5 @@ const SearchScreen = (props: SearchScreenProps) => {
 export default SearchScreen;
 
 const styles = StyleSheet.create({
-  container: {}
+  container: {},
 });
