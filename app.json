@@ -1,31 +1,28 @@
 {
   "expo": {
-    "name": "TicketSpectacle",
-    "slug": "TicketSpectacle",
+    "name": "E-ticket",
+    "slug": "E-ticket",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/E_ticket.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/E_ticket.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/E_ticket.png",
+        "backgroundColor": "#000000"
       }
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-font",
-      "expo-secure-store"
-    ]
+    "plugins": ["expo-font", "expo-secure-store"]
   }
 }

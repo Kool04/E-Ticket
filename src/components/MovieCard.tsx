@@ -104,16 +104,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.space_10,
   },
   starIcon: {
-    fontSize: FONTSIZE.size_20,
+    fontSize: FONTSIZE.size_18,
     color: COLORS.WhiteRGBA50,
   },
   mapIcon: {
-    fontSize: FONTSIZE.size_20,
+    fontSize: FONTSIZE.size_18,
     color: COLORS.Red,
   },
   voteText: {
     fontFamily: FONTFAMILY.poppins_medium,
-    fontSize: FONTSIZE.size_14,
+    fontSize: FONTSIZE.size_12,
     color: COLORS.White,
   },
   genreContainer: {

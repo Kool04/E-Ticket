@@ -9,6 +9,7 @@ import {
   ScrollView,
   StatusBar,
   FlatList,
+  ImageBackground,
   TextInput,
 } from "react-native";
 import {
@@ -76,115 +77,122 @@ const HomeScreen = ({ navigation }: any) => {
   };
 
   return (
-    <ScrollView
+    <ImageBackground
       style={styles.container}
-      bounces={false}
-      contentContainerStyle={styles.scrollViewContainer}
+      source={require("../assets/image/fond.png")}
     >
-      <StatusBar hidden />
-      <View style={styles.InputHeaderContainer}>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Rechercher un spectacle..."
-          placeholderTextColor={COLORS.WhiteRGBA32}
-          value={searchTerm}
-          onChangeText={setSearchTerm}
+      <ScrollView
+        style={styles.container}
+        bounces={false}
+        contentContainerStyle={styles.scrollViewContainer}
+      >
+        <StatusBar hidden />
+        <View style={styles.InputHeaderContainer}>
+          <TextInput
+            style={styles.textInput}
+            placeholder="Rechercher un spectacle..."
+            placeholderTextColor={COLORS.WhiteRGBA32}
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+          />
+
+          <Feather name="search" size={FONTSIZE.size_20} color={COLORS.Green} />
+        </View>
+
+        <CategoryHeader title={"Concert"} />
+
+        <FlatList
+          data={filteredSpectacle.filter(
+            (item) => item.categories === "concert"
+          )}
+          keyExtractor={(item) => item.id}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={width * 0.7 + SPACING.space_36}
+          contentContainerStyle={styles.containerGap36}
+          horizontal
+          renderItem={({ item }) => {
+            if (!item || !item.nom_spectacle) {
+              return (
+                <View
+                  style={{
+                    width: (width - (width * 0.7 + SPACING.space_36 * 2)) / 2,
+                  }}
+                ></View>
+              );
+            }
+
+            const imageUrl = item.photo_poster;
+
+            return (
+              <MovieCard
+                shouldMarginatedAtEnd={true}
+                cardFunction={() => {
+                  console.log({ movieid: item.id });
+                  navigation.push("SpectacleDetails", {
+                    movieid: item.id,
+                  });
+                }}
+                cardWidth={width * 0.7}
+                title={item.nom_spectacle}
+                imagePath={imageUrl}
+                vote_count={item.date}
+                lieu={item.lieu}
+                information1={item.information1}
+                information2={item.information2}
+                information3={item.information3}
+              />
+            );
+          }}
         />
 
-        <Feather name="search" size={FONTSIZE.size_20} color={COLORS.Green} />
-      </View>
+        <CategoryHeader title={"Spectacle"} />
+        <FlatList
+          data={filteredSpectacle.filter(
+            (item) => item.categories === "spectacle"
+          )}
+          keyExtractor={(item) => item.id}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={width * 0.7 + SPACING.space_36}
+          contentContainerStyle={styles.containerGap36}
+          horizontal
+          renderItem={({ item }) => {
+            if (!item || !item.nom_spectacle) {
+              return (
+                <View
+                  style={{
+                    width: (width - (width * 0.7 + SPACING.space_36 * 2)) / 2,
+                  }}
+                ></View>
+              );
+            }
 
-      <CategoryHeader title={"Concert"} />
+            const imageUrl = item.photo_poster;
 
-      <FlatList
-        data={filteredSpectacle.filter((item) => item.categories === "concert")}
-        keyExtractor={(item) => item.id}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={width * 0.7 + SPACING.space_36}
-        contentContainerStyle={styles.containerGap36}
-        horizontal
-        renderItem={({ item }) => {
-          if (!item || !item.nom_spectacle) {
             return (
-              <View
-                style={{
-                  width: (width - (width * 0.7 + SPACING.space_36 * 2)) / 2,
+              <MovieCard
+                shouldMarginatedAtEnd={true}
+                cardFunction={() => {
+                  console.log({ movieid: item.id });
+                  navigation.push("SpectacleDetails", {
+                    movieid: item.id,
+                  });
                 }}
-              ></View>
+                cardWidth={width * 0.7}
+                title={item.nom_spectacle}
+                imagePath={imageUrl}
+                vote_count={item.date}
+                lieu={item.lieu}
+                information1={item.information1}
+                information2={item.information2}
+                information3={item.information3}
+              />
             );
-          }
-
-          const imageUrl = item.photo_poster;
-
-          return (
-            <MovieCard
-              shouldMarginatedAtEnd={true}
-              cardFunction={() => {
-                console.log({ movieid: item.id });
-                navigation.push("SpectacleDetails", {
-                  movieid: item.id,
-                });
-              }}
-              cardWidth={width * 0.7}
-              title={item.nom_spectacle}
-              imagePath={imageUrl}
-              vote_count={item.date}
-              lieu={item.lieu}
-              information1={item.information1}
-              information2={item.information2}
-              information3={item.information3}
-            />
-          );
-        }}
-      />
-
-      <CategoryHeader title={"Spectacle"} />
-      <FlatList
-        data={filteredSpectacle.filter(
-          (item) => item.categories === "spectacle"
-        )}
-        keyExtractor={(item) => item.id}
-        bounces={false}
-        showsVerticalScrollIndicator={false}
-        snapToInterval={width * 0.7 + SPACING.space_36}
-        contentContainerStyle={styles.containerGap36}
-        horizontal
-        renderItem={({ item }) => {
-          if (!item || !item.nom_spectacle) {
-            return (
-              <View
-                style={{
-                  width: (width - (width * 0.7 + SPACING.space_36 * 2)) / 2,
-                }}
-              ></View>
-            );
-          }
-
-          const imageUrl = item.photo_poster;
-
-          return (
-            <MovieCard
-              shouldMarginatedAtEnd={true}
-              cardFunction={() => {
-                console.log({ movieid: item.id });
-                navigation.push("SpectacleDetails", {
-                  movieid: item.id,
-                });
-              }}
-              cardWidth={width * 0.7}
-              title={item.nom_spectacle}
-              imagePath={imageUrl}
-              vote_count={item.date}
-              lieu={item.lieu}
-              information1={item.information1}
-              information2={item.information2}
-              information3={item.information3}
-            />
-          );
-        }}
-      />
-    </ScrollView>
+          }}
+        />
+      </ScrollView>
+    </ImageBackground>
   );
 };
 

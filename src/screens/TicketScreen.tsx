@@ -113,55 +113,63 @@ const TicketScreen = ({ navigation }: any) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <StatusBar hidden />
-      <View style={styles.appHeaderContainer}>
-        <AppHeader
-          name="closecircleo"
-          header={"TICKET Liste"}
-          action={() => navigation.goBack()}
-        />
-      </View>
-      <View style={styles.ticketListContainer}>
-        {tickets.length > 0 ? (
-          tickets.map((ticket, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleTicketPress(ticket.id)}
-              style={styles.ticketWrapper}
-            >
-              <View style={styles.ticketContainer}>
-                <ImageBackground
-                  source={{ uri: ticket.photo_couverture }}
-                  style={styles.ticketBGImage}
-                  imageStyle={styles.ticketBGImage}
-                >
-                  <View style={styles.ticketInfo}>
-                    <Text style={styles.ticketText}>
-                      "{ticket.nom_spectacle}"
-                    </Text>
-                    <Text style={styles.ticketText}>
-                      <FontAwesome5 name="crown" style={styles.clockIcon} />{" "}
-                      {ticket.type} - Ar {ticket.prix}
-                    </Text>
-                    <Text style={styles.ticketText}>
-                      <FontAwesome5 name="users" style={styles.clockIcon} />{" "}
-                      {ticket.nombre}
-                    </Text>
-                    <Text style={styles.ticketText}>
-                      <FontAwesome5 name="calendar" style={styles.clockIcon} />{" "}
-                      {formatDate(ticket.date)}
-                    </Text>
-                  </View>
-                </ImageBackground>
-              </View>
-            </TouchableOpacity>
-          ))
-        ) : (
-          <Text style={styles.noTicketsText}>No tickets reserved</Text>
-        )}
-      </View>
-    </ScrollView>
+    <ImageBackground
+      style={styles.container}
+      source={require("../assets/image/fond.png")}
+    >
+      <ScrollView style={styles.container}>
+        <StatusBar hidden />
+        <View style={styles.appHeaderContainer}>
+          <AppHeader
+            name="closecircleo"
+            header={"TICKET Liste"}
+            action={() => navigation.goBack()}
+          />
+        </View>
+        <View style={styles.ticketListContainer}>
+          {tickets.length > 0 ? (
+            tickets.map((ticket, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleTicketPress(ticket.id)}
+                style={styles.ticketWrapper}
+              >
+                <View style={styles.ticketContainer}>
+                  <ImageBackground
+                    source={{ uri: ticket.photo_couverture }}
+                    style={styles.ticketBGImage}
+                    imageStyle={styles.ticketBGImage}
+                  >
+                    <View style={styles.ticketInfo}>
+                      <Text style={styles.ticketText}>
+                        "{ticket.nom_spectacle}"
+                      </Text>
+                      <Text style={styles.ticketText}>
+                        <FontAwesome5 name="crown" style={styles.clockIcon} />{" "}
+                        {ticket.type} - Ar {ticket.prix}
+                      </Text>
+                      <Text style={styles.ticketText}>
+                        <FontAwesome5 name="users" style={styles.clockIcon} />{" "}
+                        {ticket.nombre}
+                      </Text>
+                      <Text style={styles.ticketText}>
+                        <FontAwesome5
+                          name="calendar"
+                          style={styles.clockIcon}
+                        />{" "}
+                        {formatDate(ticket.date)}
+                      </Text>
+                    </View>
+                  </ImageBackground>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.noTicketsText}>No tickets reserved</Text>
+          )}
+        </View>
+      </ScrollView>
+    </ImageBackground>
   );
 };
 
