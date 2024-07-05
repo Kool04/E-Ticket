@@ -1,5 +1,16 @@
+/////////////////////Login///////////////////
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  ImageBackground,
+  Image,
+} from "react-native";
 import {
   getAuth,
   createUserWithEmailAndPassword,
@@ -7,6 +18,15 @@ import {
 } from "firebase/auth";
 import { initializeApp } from "firebase/app";
 import { firebaseConfig } from "../../firebase-config";
+import {
+  BORDERRADIUS,
+  COLORS,
+  FONTFAMILY,
+  FONTSIZE,
+  SPACING,
+} from "../theme/Theme";
+import { Fontisto } from "@expo/vector-icons";
+import { AntDesign } from "@expo/vector-icons";
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -36,24 +56,36 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <Button title="Sign Up" onPress={navigateToSignUp} />
-      <Button title="Login" onPress={handleLogin} />
+      <Image source={require("../assets/image/logo.png")} style={styles.logo} />
+      <View>
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholderTextColor={COLORS.WhiteRGBA50}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <Fontisto name="email" size={24} color="black" style={styles.icon} />
+      </View>
+      <View>
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholderTextColor={COLORS.WhiteRGBA50}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        <AntDesign name="eyeo" size={24} color="black" style={styles.icon} />
+      </View>
+      <TouchableOpacity onPress={handleLogin}>
+        <Text style={styles.buttonLogin}>Login</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={navigateToSignUp}>
+        <Text style={styles.buttonSignUp}>Sign Up</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -63,18 +95,59 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 16,
+    backgroundColor: COLORS.Black,
+  },
+  logo: {
+    width: "100%",
+    height: 100,
+    marginBottom: 16,
   },
   title: {
     fontSize: 24,
     marginBottom: 16,
     textAlign: "center",
+    color: COLORS.White,
+  },
+  icon: {
+    position: "absolute",
+    right: 10,
+    bottom: 20,
+    color: COLORS.WhiteRGBA75,
   },
   input: {
     height: 40,
-    borderColor: "#ccc",
+    borderColor: COLORS.WhiteRGBA50,
     borderWidth: 1,
     marginBottom: 12,
+    marginTop: SPACING.space_16,
     paddingHorizontal: 8,
+    paddingRight: 40,
+    borderRadius: BORDERRADIUS.radius_25,
+  },
+  buttonSignUp: {
+    borderRadius: BORDERRADIUS.radius_25,
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_10,
+    fontFamily: FONTFAMILY.poppins_semibold,
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.White,
+    backgroundColor: COLORS.Green,
+    marginTop: SPACING.space_10,
+    textAlign: "center",
+  },
+  buttonLogin: {
+    borderRadius: BORDERRADIUS.radius_25,
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_10,
+    fontFamily: FONTFAMILY.poppins_semibold,
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.White,
+    backgroundColor: COLORS.Green,
+    marginTop: SPACING.space_8,
+    textAlign: "center",
+  },
+  inputText: {
+    color: COLORS.WhiteRGBA75,
   },
 });
 

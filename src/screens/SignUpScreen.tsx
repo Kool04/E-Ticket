@@ -1,5 +1,15 @@
+//////////////////SignUp///////////////////////
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { getAuth } from "firebase/auth";
 import { initializeApp } from "firebase/app";
@@ -7,6 +17,16 @@ import { firebaseConfig } from "../../firebase-config";
 import { getFirestore, setDoc, doc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import * as ImagePicker from "expo-image-picker";
+import {
+  BORDERRADIUS,
+  COLORS,
+  FONTFAMILY,
+  FONTSIZE,
+  SPACING,
+} from "../theme/Theme";
+import { AntDesign } from "@expo/vector-icons";
+import { Fontisto } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -25,7 +45,7 @@ const SignUpScreen = ({ navigation }) => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 4],
+      aspect: [4, 3],
       quality: 1,
     });
 
@@ -89,44 +109,63 @@ const SignUpScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sign Up</Text>
+      <Image source={require("../assets/image/logo.png")} style={styles.logo} />
       <TextInput
-        style={styles.input}
+        style={[styles.input, styles.inputText]}
         placeholder="First Name"
+        placeholderTextColor={COLORS.WhiteRGBA50}
         value={firstName}
         onChangeText={setFirstName}
       />
       <TextInput
-        style={styles.input}
+        style={[styles.input, styles.inputText]}
         placeholder="Last Name"
+        placeholderTextColor={COLORS.WhiteRGBA50}
         value={lastName}
         onChangeText={setLastName}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-      />
-      <Button title="Pick an image" onPress={handlePickImage} />
+      <View>
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholder="Email"
+          placeholderTextColor={COLORS.WhiteRGBA50}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <Fontisto name="email" size={24} color="black" style={styles.icon} />
+      </View>
+      <View>
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholder="Password"
+          placeholderTextColor={COLORS.WhiteRGBA50}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        <AntDesign name="eyeo" size={24} color="black" style={styles.icon} />
+      </View>
+      <View>
+        <TextInput
+          style={[styles.input, styles.inputText]}
+          placeholder="Confirm Password"
+          placeholderTextColor={COLORS.WhiteRGBA50}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+        />
+        <AntDesign name="eyeo" size={24} color="black" style={styles.icon} />
+      </View>
+      <TouchableOpacity onPress={handlePickImage}>
+        <Text style={styles.buttonSignUp}>Pick an image</Text>
+        {/*<FontAwesome name="image" size={24} color="white" style={styles.imageIcon} />*/}
+      </TouchableOpacity>
       {photo && <Text>Image Selected</Text>}
-      <Button title="Sign Up" onPress={handleSignin} />
+      <TouchableOpacity onPress={handleSignin}>
+        <Text style={styles.buttonLogin}>Sign Up</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -136,18 +175,62 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     paddingHorizontal: 16,
+    backgroundColor: COLORS.Black,
+  },
+  logo: {
+    width: "100%",
+    height: 100,
+    marginBottom: 16,
+  },
+  imageIcon: {
+    marginRight: 8,
+    color: COLORS.WhiteRGBA15,
+  },
+  icon: {
+    position: "absolute",
+    right: 10,
+    bottom: 20,
+    color: COLORS.WhiteRGBA75,
   },
   title: {
     fontSize: 24,
     marginBottom: 16,
     textAlign: "center",
+    color: COLORS.White,
   },
   input: {
     height: 40,
-    borderColor: "#ccc",
+    borderColor: COLORS.WhiteRGBA50,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 10,
+    marginTop: SPACING.space_16,
     paddingHorizontal: 8,
+    borderRadius: BORDERRADIUS.radius_25,
+  },
+  buttonSignUp: {
+    borderRadius: BORDERRADIUS.radius_25,
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_10,
+    fontFamily: FONTFAMILY.poppins_semibold,
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.White,
+    backgroundColor: COLORS.Green2,
+    marginTop: SPACING.space_10,
+    textAlign: "center",
+  },
+  buttonLogin: {
+    borderRadius: BORDERRADIUS.radius_25,
+    paddingHorizontal: SPACING.space_24,
+    paddingVertical: SPACING.space_10,
+    fontFamily: FONTFAMILY.poppins_semibold,
+    fontSize: FONTSIZE.size_20,
+    color: COLORS.White,
+    backgroundColor: COLORS.Green,
+    marginTop: SPACING.space_8,
+    textAlign: "center",
+  },
+  inputText: {
+    color: COLORS.WhiteRGBA75,
   },
 });
 

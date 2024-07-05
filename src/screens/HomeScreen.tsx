@@ -90,7 +90,7 @@ const HomeScreen = ({ navigation }: any) => {
         <View style={styles.InputHeaderContainer}>
           <TextInput
             style={styles.textInput}
-            placeholder="Rechercher un spectacle..."
+            placeholder="Recherche..."
             placeholderTextColor={COLORS.WhiteRGBA32}
             value={searchTerm}
             onChangeText={setSearchTerm}
